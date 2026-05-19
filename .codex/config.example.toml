@@ -1,0 +1,9 @@
+# Example Codex config for repositories using goctx.
+# This is only an example. Review before copying into any active config.
+
+[goctx]
+prefer_task_pack = true
+prefer_symbol_slices = true
+avoid_generated_files = true
+avoid_vendor = true
+summarize_tests = true
