@@ -15,19 +15,22 @@ var ignoredDirs = map[string]FileKind{
 	".git":         KindBuildArtifact,
 }
 
-func ignoreDir(rel string) bool {
+func ignoreDir(rel string, cfg Config) bool {
 	for _, p := range strings.Split(rel, "/") {
-		if _, ok := ignoredDirs[p]; ok {
+		if containsDir(cfg.IgnoreDirs, p) {
 			return true
 		}
 	}
 	return false
 }
 
-func dirKind(rel string) FileKind {
+func dirKind(rel string, cfg Config) FileKind {
 	for _, p := range strings.Split(rel, "/") {
 		if k, ok := ignoredDirs[p]; ok {
 			return k
+		}
+		if containsDir(cfg.IgnoreDirs, p) {
+			return KindBuildArtifact
 		}
 	}
 	return KindBuildArtifact
@@ -38,4 +41,13 @@ func ignoreDirReason(rel string) string {
 		return "vendored dependency"
 	}
 	return "build/dependency output"
+}
+
+func containsDir(dirs []string, name string) bool {
+	for _, d := range dirs {
+		if strings.TrimSuffix(d, "/") == name {
+			return true
+		}
+	}
+	return false
 }

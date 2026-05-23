@@ -42,3 +42,12 @@ func TestMiddlewareExtraction(t *testing.T) {
 		t.Fatalf("expected middleware, got %#v", res.Middleware)
 	}
 }
+
+func TestWrapperCandidateExtraction(t *testing.T) {
+	res := extractSource(t, `package p
+func RegisterGET(path string, h func()) { router.GET(path, h) }
+`)
+	if len(res.WrapperCandidates) != 1 {
+		t.Fatalf("expected wrapper candidate, got %#v", res.WrapperCandidates)
+	}
+}

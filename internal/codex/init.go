@@ -14,13 +14,26 @@ type FileResult struct {
 }
 
 func Init(root string, force bool) ([]FileResult, error) {
+	return InitWithOptions(root, force, false)
+}
+
+func InitWithOptions(root string, force bool, strict bool) ([]FileResult, error) {
+	agents := AgentsTemplate
+	skill := SkillTemplate
+	hooks := HooksTemplate
+	if strict {
+		agents = StrictAgentsTemplate
+		skill = StrictSkillTemplate
+		hooks = StrictHooksTemplate
+	}
 	files := map[string]string{
-		"AGENTS.md": AgentsTemplate,
+		"AGENTS.md": agents,
 		".agents/skills/go-token-efficient/SKILL.md":      SkillTemplate,
 		".agents/skills/go-token-efficient/scripts/goctx": ScriptTemplate,
-		".codex/GOCTX_HOOKS.md":                           HooksTemplate,
+		".codex/GOCTX_HOOKS.md":                           hooks,
 		".codex/config.example.toml":                      ConfigTemplate,
 	}
+	files[".agents/skills/go-token-efficient/SKILL.md"] = skill
 	order := []string{"AGENTS.md", ".agents/skills/go-token-efficient/SKILL.md", ".agents/skills/go-token-efficient/scripts/goctx", ".codex/GOCTX_HOOKS.md", ".codex/config.example.toml"}
 	var results []FileResult
 	for _, rel := range order {

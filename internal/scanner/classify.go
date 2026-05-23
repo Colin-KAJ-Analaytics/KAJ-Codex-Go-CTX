@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -8,6 +9,10 @@ import (
 const largeFileBytes = 256 * 1024
 
 func Classify(root, rel string, size int64) FileInfo {
+	return ClassifyWithConfig(root, rel, size, LoadConfig(root))
+}
+
+func ClassifyWithConfig(root, rel string, size int64, cfg Config) FileInfo {
 	rel = filepath.ToSlash(rel)
 	base := filepath.Base(rel)
 	lower := strings.ToLower(rel)
@@ -15,8 +20,12 @@ func Classify(root, rel string, size int64) FileInfo {
 	switch {
 	case base == "go.sum":
 		info.Kind, info.IgnoredByDefault, info.Reason = KindDependencyLock, true, "dependency lock, high token noise"
-	case isGeneratedName(base):
+	case base == ".DS_Store":
+		info.Kind, info.IgnoredByDefault, info.Reason = KindBuildArtifact, true, "platform metadata"
+	case matchesAny(base, rel, cfg.IgnoreFiles):
 		info.Kind, info.IgnoredByDefault, info.Reason = KindGenerated, true, "generated file"
+	case looksLikeBinaryArtifact(root, rel, size):
+		info.Kind, info.IgnoredByDefault, info.Reason = KindBuildArtifact, true, "binary/build artifact"
 	case strings.HasPrefix(base, "mock_"):
 		info.Kind, info.IgnoredByDefault, info.Reason = KindGenerated, true, "mock/generated-like file"
 	case isMigration(lower):
@@ -29,7 +38,7 @@ func Classify(root, rel string, size int64) FileInfo {
 	case isFixture(lower):
 		info.Kind = KindFixture
 		info.Reason = "fixture file"
-		info.IgnoredByDefault = size > largeFileBytes
+		info.IgnoredByDefault = size > cfg.MaxFixtureBytes
 		if info.IgnoredByDefault {
 			info.Reason = "large fixture file"
 		}
@@ -49,6 +58,23 @@ func Classify(root, rel string, size int64) FileInfo {
 	return info
 }
 
+func looksLikeBinaryArtifact(root, rel string, size int64) bool {
+	if size < 1024*1024 || filepath.Ext(rel) != "" {
+		return false
+	}
+	data := make([]byte, 4)
+	f, err := os.Open(filepath.Join(root, filepath.FromSlash(rel)))
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	n, _ := f.Read(data)
+	if n < 4 {
+		return false
+	}
+	return string(data[:4]) == "\x7fELF" || string(data[:4]) == "\xcf\xfa\xed\xfe" || string(data[:4]) == "\xfe\xed\xfa\xcf" || string(data[:2]) == "MZ"
+}
+
 func isGeneratedName(base string) bool {
 	return strings.HasSuffix(base, ".pb.go") || strings.HasSuffix(base, "_generated.go") || strings.HasSuffix(base, ".gen.go")
 }
@@ -59,4 +85,16 @@ func isMigration(path string) bool {
 
 func isFixture(path string) bool {
 	return strings.Contains(path, "/testdata/") || strings.Contains(path, "/fixtures/") || strings.HasPrefix(path, "testdata/") || strings.HasPrefix(path, "fixtures/")
+}
+
+func matchesAny(base, rel string, patterns []string) bool {
+	for _, p := range patterns {
+		if ok, _ := filepath.Match(p, base); ok {
+			return true
+		}
+		if ok, _ := filepath.Match(filepath.ToSlash(p), rel); ok {
+			return true
+		}
+	}
+	return isGeneratedName(base)
 }

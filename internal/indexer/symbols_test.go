@@ -1,6 +1,11 @@
 package indexer
 
-import "testing"
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestSymbolsFromSource(t *testing.T) {
 	src := []byte(`package p
@@ -25,5 +30,22 @@ func TestVerifyToken(t *testing.T) {}
 	}
 	if len(want) != 0 {
 		t.Fatalf("missing symbols: %#v", want)
+	}
+}
+
+func TestLoadPackagesFlexibleASTFallback(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "broken.go"), []byte("package broken\nfunc Useful() {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	res, err := LoadPackagesFlexible(context.Background(), root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Confidence == "high" {
+		t.Fatalf("expected degraded confidence, got %#v", res)
+	}
+	if len(res.Packages) == 0 || len(res.Packages[0].Symbols) == 0 {
+		t.Fatalf("expected AST fallback symbols, got %#v", res)
 	}
 }

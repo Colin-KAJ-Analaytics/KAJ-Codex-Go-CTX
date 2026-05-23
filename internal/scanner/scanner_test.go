@@ -40,3 +40,36 @@ func TestNormalGoSourceClassification(t *testing.T) {
 		t.Fatalf("expected normal Go source, got %#v", got)
 	}
 }
+
+func TestConfigIgnoreFilesAndDirs(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, ".goctx.yaml"), []byte("ignore:\n  dirs:\n    - snapshots\n  files:\n    - \"*.golden\"\n  max_fixture_bytes: 1\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "snapshots"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "snapshots", "x.go"), []byte("package x\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "x.golden"), []byte("data"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	res, err := Scan(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundDir := false
+	foundFile := false
+	for _, f := range res.Files {
+		if f.Path == "snapshots/" && f.IgnoredByDefault {
+			foundDir = true
+		}
+		if f.Path == "x.golden" && f.IgnoredByDefault {
+			foundFile = true
+		}
+	}
+	if !foundDir || !foundFile {
+		t.Fatalf("expected config ignores, got %#v", res.Files)
+	}
+}

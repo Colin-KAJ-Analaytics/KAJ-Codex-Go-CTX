@@ -11,17 +11,29 @@ import (
 )
 
 type RankedItem struct {
-	Name  string
-	Score int
+	Name    string
+	Score   int
+	Reasons []string
 }
 
 type Result struct {
-	Task     string
-	Packages []RankedItem
-	Files    []RankedItem
-	Symbols  []RankedItem
-	Tests    []string
-	Avoid    []string
+	Task       string
+	Packages   []RankedItem
+	Files      []RankedItem
+	Symbols    []RankedItem
+	Tests      []string
+	Avoid      []string
+	ReadPlan   []string
+	Warnings   []string
+	Omitted    []string
+	Confidence string
+	Savings    Savings
+}
+
+type Savings struct {
+	NaiveEstimatedTokens       int64
+	RecommendedEstimatedTokens int64
+	ReductionPercent           float64
 }
 
 var stop = map[string]bool{"a": true, "an": true, "and": true, "or": true, "the": true, "to": true, "of": true, "in": true, "for": true, "fix": true, "add": true, "update": true}
@@ -45,18 +57,28 @@ func Tokenize(s string) []string {
 
 func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 	terms := Tokenize(task)
-	res := Result{Task: task, Avoid: []string{"generated files", "vendor", "go.sum", "migrations", "frontend assets"}}
+	res := Result{Task: task, Avoid: []string{"generated files", "vendor", "go.sum", "migrations", "large fixtures", "large generated files"}, Confidence: "medium"}
 	fileScores := map[string]int{}
+	fileReasons := map[string][]string{}
 	symScores := map[string]int{}
+	symReasons := map[string][]string{}
 	for _, p := range pkgs {
 		pscore := scoreText(p.ImportPath+" "+p.Name+" "+strings.Join(p.Imports, " "), terms)
+		pkgReasons := reasonsForText(p.ImportPath+" "+p.Name+" "+strings.Join(p.Imports, " "), terms, "package/import matched")
 		for _, f := range p.Files {
 			s := scoreText(f, terms)
 			if strings.HasSuffix(f, "_test.go") {
 				s += scoreText(strings.TrimSuffix(f, "_test.go"), terms)
 			}
+			if strings.Contains(strings.ToLower(f), "route") || strings.Contains(strings.ToLower(f), "handler") {
+				if containsAny(terms, "route", "routes", "handler", "http", "api", "endpoint") {
+					s += 6
+					fileReasons[f] = appendUnique(fileReasons[f], "route/handler path matched task")
+				}
+			}
 			if s > 0 {
 				fileScores[f] += s
+				fileReasons[f] = append(fileReasons[f], reasonsForText(f, terms, "path matched task")...)
 				pscore += s / 2
 			}
 		}
@@ -64,12 +86,14 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 			s := scoreText(indexer.DisplayName(sym)+" "+sym.File, terms)
 			if s > 0 {
 				symScores[indexer.DisplayName(sym)] += s
+				symReasons[indexer.DisplayName(sym)] = append(symReasons[indexer.DisplayName(sym)], reasonsForText(indexer.DisplayName(sym), terms, "symbol matched task")...)
 				fileScores[sym.File] += s
+				fileReasons[sym.File] = append(fileReasons[sym.File], "contains matching symbol "+indexer.DisplayName(sym))
 				pscore += s
 			}
 		}
 		if pscore > 0 {
-			res.Packages = append(res.Packages, RankedItem{Name: p.ImportPath, Score: pscore})
+			res.Packages = append(res.Packages, RankedItem{Name: p.ImportPath, Score: pscore, Reasons: pkgReasons})
 		}
 		for _, f := range p.TestFiles {
 			if fileScores[strings.TrimSuffix(f, "_test.go")+".go"] > 0 || scoreText(f, terms) > 0 {
@@ -80,12 +104,12 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 	}
 	for f, s := range fileScores {
 		if !ignored(scan, f) && s > 0 {
-			res.Files = append(res.Files, RankedItem{Name: f, Score: s})
+			res.Files = append(res.Files, RankedItem{Name: f, Score: applyFilePenalty(scan, f, s), Reasons: uniqueStrings(fileReasons[f])})
 		}
 	}
 	for s, score := range symScores {
 		if score > 0 {
-			res.Symbols = append(res.Symbols, RankedItem{Name: s, Score: score})
+			res.Symbols = append(res.Symbols, RankedItem{Name: s, Score: score, Reasons: uniqueStrings(symReasons[s])})
 		}
 	}
 	sortRanked(res.Packages)
@@ -97,6 +121,8 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 	if len(res.Tests) == 0 {
 		res.Tests = []string{"go test ./..."}
 	}
+	res.ReadPlan = buildReadPlan(res)
+	res.Savings = estimateSavings(res, scan)
 	return res
 }
 
@@ -109,6 +135,16 @@ func scoreText(text string, terms []string) int {
 		}
 	}
 	return score
+}
+
+func reasonsForText(text string, terms []string, reason string) []string {
+	text = strings.ToLower(splitCamel(text))
+	for _, t := range terms {
+		if strings.Contains(text, t) {
+			return []string{reason + " (" + t + ")"}
+		}
+	}
+	return nil
 }
 
 func expandDomain(terms []string) []string {
@@ -170,6 +206,92 @@ func appendUnique(xs []string, x string) []string {
 		}
 	}
 	return append(xs, x)
+}
+
+func uniqueStrings(xs []string) []string {
+	var out []string
+	for _, x := range xs {
+		out = appendUnique(out, x)
+	}
+	return out
+}
+
+func containsAny(terms []string, qs ...string) bool {
+	for _, t := range terms {
+		for _, q := range qs {
+			if t == q {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func applyFilePenalty(scan scanner.Result, path string, score int) int {
+	for _, f := range scan.Files {
+		if f.Path == path && f.SizeBytes > 128*1024 {
+			return score - 5
+		}
+	}
+	return score
+}
+
+func buildReadPlan(res Result) []string {
+	var plan []string
+	for _, f := range top(res.Files, 5) {
+		plan = append(plan, "goctx symbols "+f.Name)
+	}
+	for i, s := range res.Symbols {
+		if i >= 5 {
+			break
+		}
+		file := ""
+		for _, f := range res.Files {
+			for _, r := range f.Reasons {
+				if strings.Contains(r, s.Name) {
+					file = f.Name
+					break
+				}
+			}
+			if file != "" {
+				break
+			}
+		}
+		if file != "" {
+			plan = append(plan, "goctx slice "+file+" --symbol "+s.Name)
+		}
+	}
+	for _, t := range res.Tests {
+		plan = append(plan, "goctx test-summary -- "+t)
+		if len(plan) >= 10 {
+			break
+		}
+	}
+	return plan
+}
+
+func estimateSavings(res Result, scan scanner.Result) Savings {
+	var naive int64
+	for _, f := range res.Files {
+		for _, sf := range scan.Files {
+			if sf.Path == f.Name {
+				naive += sf.SizeBytes / 4
+			}
+		}
+	}
+	if naive == 0 {
+		for _, sf := range scan.Files {
+			if !sf.IgnoredByDefault && (sf.Kind == scanner.KindGoSource || sf.Kind == scanner.KindGoTest) {
+				naive += sf.SizeBytes / 4
+			}
+		}
+	}
+	rec := int64(250 + len(res.Files)*80 + len(res.Symbols)*20 + len(res.ReadPlan)*20)
+	var pct float64
+	if naive > 0 && rec < naive {
+		pct = float64(naive-rec) / float64(naive) * 100
+	}
+	return Savings{NaiveEstimatedTokens: naive, RecommendedEstimatedTokens: rec, ReductionPercent: pct}
 }
 func ignored(scan scanner.Result, path string) bool {
 	for _, f := range scan.Files {

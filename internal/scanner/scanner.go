@@ -38,6 +38,10 @@ type Result struct {
 }
 
 func Scan(root string) (Result, error) {
+	return ScanWithConfig(root, LoadConfig(root))
+}
+
+func ScanWithConfig(root string, cfg Config) (Result, error) {
 	var files []FileInfo
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -52,13 +56,13 @@ func Scan(root string) (Result, error) {
 			return nil
 		}
 		if d.IsDir() {
-			if ignoreDir(rel) {
+			if ignoreDir(rel, cfg) {
 				info, statErr := d.Info()
 				size := int64(0)
 				if statErr == nil {
 					size = info.Size()
 				}
-				files = append(files, FileInfo{Path: rel + "/", Kind: dirKind(rel), SizeBytes: size, IgnoredByDefault: true, Reason: ignoreDirReason(rel)})
+				files = append(files, FileInfo{Path: rel + "/", Kind: dirKind(rel, cfg), SizeBytes: size, IgnoredByDefault: true, Reason: ignoreDirReason(rel)})
 				return filepath.SkipDir
 			}
 			return nil
@@ -67,7 +71,7 @@ func Scan(root string) (Result, error) {
 		if err != nil {
 			return err
 		}
-		files = append(files, Classify(root, rel, info.Size()))
+		files = append(files, ClassifyWithConfig(root, rel, info.Size(), cfg))
 		return nil
 	})
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })

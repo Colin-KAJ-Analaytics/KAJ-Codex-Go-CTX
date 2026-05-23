@@ -1,0 +1,336 @@
+{
+  "timestamp": "2026-05-22T23:22:50Z",
+  "root": "/Users/ckemp/KAJAnalytics/KAJ-Codex-Go-CTX",
+  "files": [
+    {
+      "path": ".agents/skills/go-token-efficient/SKILL.md",
+      "sha256": "4f06210e12aeed2d2f9337eec4f74d43543bd26a180ea3fd604e9dde9af5d6e4",
+      "size": 646,
+      "kind": "documentation"
+    },
+    {
+      "path": ".agents/skills/go-token-efficient/scripts/goctx",
+      "sha256": "249033772929910a2f8368ec04856531012a8b859bb58e070eeefe7c51eca145",
+      "size": 34,
+      "kind": "unknown"
+    },
+    {
+      "path": ".codex/GOCTX_HOOKS.md",
+      "sha256": "bd140713919960d59bc48b6eda972c0df92032562cf276dadfe81526a45eb389",
+      "size": 554,
+      "kind": "documentation"
+    },
+    {
+      "path": ".codex/config.example.toml",
+      "sha256": "edb656c800b35fc027741efa86205ec90d15e365564f36229e4998d94a89ddb6",
+      "size": 259,
+      "kind": "unknown"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "6437fde0916d18d1ea89d6bca6b2d827af7fb1dab682aa765812e09b10d7e09d",
+      "size": 583,
+      "kind": "unknown"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "ad18f5849434d3aaccc62b4133e7ceb7b9978d0b933497324f66ce7669d612d6",
+      "size": 628,
+      "kind": "documentation"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "size": 11357,
+      "kind": "unknown"
+    },
+    {
+      "path": "README.md",
+      "sha256": "5bd5df2b6a6f0e314da4fa5815f1e81c42e5ef51c8219eaf7bd6cb7a244f05bf",
+      "size": 5523,
+      "kind": "documentation"
+    },
+    {
+      "path": "cmd/goctx/main.go",
+      "sha256": "fc2fe75b5a94a0de3860827975f10925242b602b7b1d3133a283233ceb2e2db4",
+      "size": 124,
+      "kind": "go_source"
+    },
+    {
+      "path": "go.mod",
+      "sha256": "5ca98dea0be95f2ca5445c3ede717d6fbc5fe4a13e6401de999b03cec22a3b04",
+      "size": 150,
+      "kind": "unknown"
+    },
+    {
+      "path": "internal/baseline/baseline.go",
+      "sha256": "e5e44566c898ac36b4cf162f314b0ae6d6c4cffa7f5ee822bd650b5bf87bb73c",
+      "size": 2202,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/baseline/baseline_test.go",
+      "sha256": "e7092e6180cc65582b3a423832c7d6fa62ac52a86c1adca7d5700384fff33422",
+      "size": 689,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/cli/cli.go",
+      "sha256": "d5f1c6504ec203cca06fd7b1086e92e3e7b9c7b4889dd1390e82e4ac324bf30d",
+      "size": 17943,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/cli/usage.go",
+      "sha256": "4322f462919df33f9f7f4750ef3d0bed15c9cfafa4a4a94915cd6b257cc40214",
+      "size": 1487,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/codex/init.go",
+      "sha256": "4f8a35f483b43e014161ad0524020964e833d41560d0f603a5ab5d18cdb7d701",
+      "size": 1949,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/codex/init_test.go",
+      "sha256": "bea6a587c869f1430d20bf9949fc68ad52f64ba164ecb4d68f3ac1dbeb981bc5",
+      "size": 1111,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/codex/templates.go",
+      "sha256": "797599628f0b80b5d52890d9eae5ba2551964fe922a1f4a319b8f37052c76939",
+      "size": 5143,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/codexpack/pack.go",
+      "sha256": "d008c7cde12a1ce44ad344325ea8b525bc81795e069fb5057bdffe2ba099a9d5",
+      "size": 6593,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/codexpack/pack_test.go",
+      "sha256": "df290f17b9077e0ac51732d71817afa1153e1b678969d1a1f5c4374b05e08c6d",
+      "size": 1202,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/diffsummary/summarize.go",
+      "sha256": "69233514ee000eb6083abbd7a4c594fb324b3643712d09812f08be153bc28726",
+      "size": 1380,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/diffsummary/summarize_test.go",
+      "sha256": "6bf8003d69c2b1e338aad78b614f983d2414e87fd943e56c5a5b63cb0baa0ebe",
+      "size": 315,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/discovery/discovery.go",
+      "sha256": "56ff24372ee00b96e8d84c394b702c9b210d43c6fc61e9e4c2fe26e618b0e7d6",
+      "size": 6999,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/discovery/discovery_test.go",
+      "sha256": "b17573d3cedae71949f4a61084fbffa168974f65a6ca8b360f47c6d3063a6d41",
+      "size": 1596,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/indexer/ast.go",
+      "sha256": "3b4144f60d618db6ea890c044e9563d2c7a9384419e6304b01e89c362b845a85",
+      "size": 328,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/indexer/packages.go",
+      "sha256": "374e5d69a7fc9ffe30994220012c2828aadbfb723f44e247589fafedd76ce2ed",
+      "size": 7053,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/indexer/symbols.go",
+      "sha256": "71e6fc50f9e64c184b7d9bb947e83651ac1b5df22a692cd97eccec653c1ca439",
+      "size": 3436,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/indexer/symbols_test.go",
+      "sha256": "49ab1dc1ce09ccf931b72d3cbfac80d406109b7ef9c42ee69958811f180cfc34",
+      "size": 1403,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/output/output.go",
+      "sha256": "37041be33babbc1aecd9263306844db36b4a3ca252020bcf7f2d559ad51dc0ec",
+      "size": 5571,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/routes/chi.go",
+      "sha256": "005e96efe0a46fde82f5895a0e3baf60b4b8396018d9d7712dd063f3ee0aebde",
+      "size": 99,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/routes/echo.go",
+      "sha256": "1f19552ee7d2658630533279218afe35b587d6b43fc63eccf46db5192bb360db",
+      "size": 100,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/routes/gin.go",
+      "sha256": "4a1398d918422c582e7b17247f2b81461021610200fe8346a894faf7de017b3b",
+      "size": 99,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/routes/nethttp.go",
+      "sha256": "b9d6b85a026bbc549393f71836e8404193abb7fd95600d2c2f441b3820c710de",
+      "size": 120,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/routes/routes.go",
+      "sha256": "884c6b707158e1581e44e48cd6e37a7da7be61a5e0015e8a809bf06e90f605c4",
+      "size": 4927,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/routes/routes_test.go",
+      "sha256": "4b3d5f9b50039438ff81ca2c6014d5b7a1dfb423c98cfea1f173ea004e5ea57e",
+      "size": 1440,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/scanner/classify.go",
+      "sha256": "a9c4019df7be50319c69615153a6d057ae36449be091f569a85931b2e3288447",
+      "size": 3457,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/scanner/config.go",
+      "sha256": "7ff977cad09b9e7ad6b91aca09be92d007f998403a700133a8e9166363b2c010",
+      "size": 3146,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/scanner/ignore.go",
+      "sha256": "63d657467363cc11302c746d0f844e4ceb852e401cc68021c86d01366136e475",
+      "size": 1153,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/scanner/scanner.go",
+      "sha256": "82b87c476b179836ff66c6443582fca1ea53f4f349418de3b449503c16ff5a42",
+      "size": 2538,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/scanner/scanner_test.go",
+      "sha256": "b9da9c5a8c8c733c76e14f1ded0b84464b2d8ef596ee132af02f0e223fa78941",
+      "size": 2173,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/slicer/slice.go",
+      "sha256": "f9a4cef0e8f79d24d3d79527a49eaab4768907baf10ae79473761d22f2dbf610",
+      "size": 1523,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/slicer/slice_test.go",
+      "sha256": "2240caac87bf03d71796147dcbba4d370b38f85d0f2e4b2e5fd49079b1e2d8cc",
+      "size": 1398,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/smells/smells.go",
+      "sha256": "8d0608602baaf6fcef43f203d3eccba960cd50f1cf76d998f450a8403b50ee8f",
+      "size": 5616,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/smells/smells_test.go",
+      "sha256": "f34028a2e2ab2e21d8380e7e36667b20cf19e6f0d55ea458a6dc6d84474524eb",
+      "size": 524,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/taskpack/pack.go",
+      "sha256": "df2b39ef98f56ecab2b989fc039b1c6bec8ac5c19de0b0e2406fcd38d1c78108",
+      "size": 1458,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/taskpack/pack_test.go",
+      "sha256": "fc41bbb56a773d057f17c4fd9d06f2794f06e5c0a17d6783f7db9115fd2f2042",
+      "size": 1335,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/taskpack/rank.go",
+      "sha256": "13f40e0f5fcd08b4a666d7fa269b9cd88fc9d4ce34fd4b218031f590a14c4365",
+      "size": 7797,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/testsum/summarize.go",
+      "sha256": "e3b3d17233ed224b6e0cc44c7890dfcc2d07c0b5a59e1584234690a836ee1ad0",
+      "size": 3265,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/testsum/summarize_test.go",
+      "sha256": "da9677c84e1f708abc8064f8f9142d7bb6acfa4756833c5bd38538a52950da1b",
+      "size": 635,
+      "kind": "go_test"
+    },
+    {
+      "path": "internal/tokens/estimate.go",
+      "sha256": "d6119c167ae33bbafd52373e981a64b49bf7517cebc49cf3c9b8f563c2966f1b",
+      "size": 114,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/tokens/report.go",
+      "sha256": "4fd8169790310ce5a13c19bdcb3a89f30099636c19c359697e24b15d34debb1a",
+      "size": 1040,
+      "kind": "go_source"
+    },
+    {
+      "path": "internal/tokens/report_test.go",
+      "sha256": "098dca3081864619ef0c30c844e7ba8a74b0d329991a464e67bc101cabcb875d",
+      "size": 550,
+      "kind": "go_test"
+    },
+    {
+      "path": "templates/AGENTS.md.tmpl",
+      "sha256": "fea63d22af5328eaade1c6749e47d87913fcc5098bc93e0892ac7df0462093dc",
+      "size": 151,
+      "kind": "unknown"
+    },
+    {
+      "path": "templates/HOOKS.md.tmpl",
+      "sha256": "cc1025240b0a122c0c4cf682487c78693eb9c5ce4b3961de28119a23c4744167",
+      "size": 131,
+      "kind": "unknown"
+    },
+    {
+      "path": "templates/SKILL.md.tmpl",
+      "sha256": "a597c139f5585dccc466d0997ccb631f893853f488a6ece8e3c6b258b12a5eb1",
+      "size": 211,
+      "kind": "unknown"
+    },
+    {
+      "path": "templates/config.toml.tmpl",
+      "sha256": "d1b13d177f4268fadac87c903ff756a227d2ce1c321f6df06361d46baf65792f",
+      "size": 73,
+      "kind": "unknown"
+    }
+  ]
+}

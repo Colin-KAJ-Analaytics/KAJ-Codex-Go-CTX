@@ -32,8 +32,16 @@ type Middleware struct {
 }
 
 type Result struct {
-	Routes     []Route
-	Middleware []Middleware
+	Routes            []Route
+	Middleware        []Middleware
+	WrapperCandidates []WrapperCandidate
+}
+
+type WrapperCandidate struct {
+	Name   string
+	File   string
+	Line   int
+	Reason string
 }
 
 func Extract(root string) (Result, error) {
@@ -80,6 +88,12 @@ func ExtractFile(root, path string) (Result, error) {
 	}
 	var res Result
 	ast.Inspect(file, func(n ast.Node) bool {
+		if fn, ok := n.(*ast.FuncDecl); ok {
+			if cand, ok := wrapperCandidate(fset, rel, fn); ok {
+				res.WrapperCandidates = append(res.WrapperCandidates, cand)
+			}
+			return true
+		}
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
 			return true
@@ -111,6 +125,50 @@ func ExtractFile(root, path string) (Result, error) {
 		return true
 	})
 	return res, nil
+}
+
+func wrapperCandidate(fset *token.FileSet, rel string, fn *ast.FuncDecl) (WrapperCandidate, bool) {
+	if fn.Body == nil || fn.Name == nil {
+		return WrapperCandidate{}, false
+	}
+	hasPathParam := false
+	hasHandlerParam := false
+	if fn.Type.Params != nil {
+		for _, p := range fn.Type.Params.List {
+			t := exprString(fset, p.Type)
+			if t == "string" {
+				for _, n := range p.Names {
+					if strings.Contains(strings.ToLower(n.Name), "path") || strings.Contains(strings.ToLower(n.Name), "route") {
+						hasPathParam = true
+					}
+				}
+			}
+			if strings.Contains(strings.ToLower(t), "handler") || strings.Contains(strings.ToLower(t), "func") {
+				hasHandlerParam = true
+			}
+		}
+	}
+	if !hasPathParam || !hasHandlerParam {
+		return WrapperCandidate{}, false
+	}
+	foundRouteCall := false
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
+			if _, ok := routeMethod(sel.Sel.Name); ok {
+				foundRouteCall = true
+				return false
+			}
+		}
+		return true
+	})
+	if !foundRouteCall {
+		return WrapperCandidate{}, false
+	}
+	return WrapperCandidate{Name: fn.Name.Name, File: rel, Line: fset.Position(fn.Pos()).Line, Reason: "function accepts path/handler parameters and calls a route registration method"}, true
 }
 
 func routeMethod(name string) (string, bool) {

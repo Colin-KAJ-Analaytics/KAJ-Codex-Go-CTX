@@ -33,5 +33,5 @@ func Report(w io.Writer, scan scanner.Result) {
 }
 
 func SuggestedExclusions() []string {
-	return []string{"vendor/", "node_modules/", "dist/", "build/", "coverage/", "go.sum", "**/*.pb.go", "**/*_generated.go", "**/*.gen.go", "mock_*.go"}
+	return []string{"vendor/", "node_modules/", "dist/", "build/", "coverage/", ".goctx/", "go.sum", "**/*.pb.go", "**/*_generated.go", "**/*.gen.go", "mock_*.go"}
 }
