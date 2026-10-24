@@ -180,7 +180,11 @@ func runDiscover(opts output.Options, stdout, stderr io.Writer) int {
 }
 
 func runMap(opts output.Options, stdout, stderr io.Writer) int {
-	root, disc, _ := discovery.SelectRoot(opts.Root, opts.Module)
+	root, disc, err := discovery.SelectRoot(opts.Root, opts.Module)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
 	idx, err := indexer.LoadPackagesFlexible(context.Background(), root)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -196,7 +200,7 @@ func runMap(opts output.Options, stdout, stderr io.Writer) int {
 				env.Symbols = append(env.Symbols, output.SymbolItem{Name: indexer.DisplayName(s), Kind: string(s.Kind), File: s.File, Line: s.StartLine, Receiver: s.Receiver})
 			}
 		}
-		env.ActualEstimatedTokens = int64(len(env.Files)*20 + len(env.Symbols)*15 + 100)
+		output.ApplyBudget(&env, opts)
 		_ = output.WriteJSON(stdout, env)
 		return 0
 	}
@@ -265,8 +269,16 @@ func runSlice(args []string, stdout, stderr io.Writer) int {
 }
 
 func runTask(opts output.Options, task string, stdout, stderr io.Writer) int {
-	root, disc, _ := discovery.SelectRoot(opts.Root, opts.Module)
-	idx, _ := indexer.LoadPackagesFlexible(context.Background(), root)
+	root, disc, err := discovery.SelectRoot(opts.Root, opts.Module)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+	idx, err := indexer.LoadPackagesFlexible(context.Background(), root)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
 	sc, err := scanner.Scan(root)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -278,6 +290,7 @@ func runTask(opts output.Options, task string, stdout, stderr io.Writer) int {
 	if opts.Format == output.FormatJSON {
 		env := taskEnvelope("task", root, disc.Selected, res, opts)
 		env.Warnings = append(env.Warnings, idx.Warnings...)
+		output.ApplyBudget(&env, opts)
 		_ = output.WriteJSON(stdout, env)
 		return 0
 	}
@@ -292,7 +305,9 @@ func runCodexPack(opts output.Options, task string, stdout, stderr io.Writer) in
 		return 1
 	}
 	if opts.Format == output.FormatJSON {
-		_ = output.WriteJSON(stdout, codexpack.Envelope("codex-pack", res, opts))
+		env := codexpack.Envelope("codex-pack", res, opts)
+		output.ApplyBudget(&env, opts)
+		_ = output.WriteJSON(stdout, env)
 		return 0
 	}
 	codexpack.WriteText(stdout, res, opts)
@@ -406,8 +421,18 @@ func runTokenReport(opts output.Options, stdout, stderr io.Writer) int {
 }
 
 func runDoctor(opts output.Options, stdout, stderr io.Writer) int {
-	root, disc, _ := discovery.SelectRoot(opts.Root, opts.Module)
-	idx, _ := indexer.LoadPackagesFlexible(context.Background(), root)
+	root, disc, discErr := discovery.SelectRoot(opts.Root, opts.Module)
+	if discErr != nil {
+		fmt.Fprintln(stderr, "error:", discErr)
+		return 1
+	}
+	idx, idxErr := indexer.LoadPackagesFlexible(context.Background(), root)
+	if idxErr != nil {
+		idx.Warnings = append(idx.Warnings, "package loading error: "+idxErr.Error())
+		if idx.Confidence == "" {
+			idx.Confidence = "low"
+		}
+	}
 	env := output.Envelope{Command: "doctor", Root: root, Module: disc.Selected, Confidence: idx.Confidence, Warnings: append(disc.Warnings, idx.Warnings...)}
 	checks := []string{}
 	checks = append(checks, "OK   current directory: "+opts.Root)
@@ -532,21 +557,12 @@ func budgetedFileItems(files []scanner.FileInfo, opts output.Options, largestFir
 
 func taskEnvelope(command, root, module string, res taskpack.Result, opts output.Options) output.Envelope {
 	env := output.Envelope{Command: command, Root: root, Module: module, BudgetEstimatedTokens: opts.Budget, Confidence: res.Confidence, Warnings: res.Warnings, Tests: res.Tests, ReadPlan: res.ReadPlan}
-	for i, f := range res.Files {
-		if i >= opts.MaxFiles {
-			env.Omitted = append(env.Omitted, output.Omission{Kind: "files", Count: len(res.Files) - opts.MaxFiles, Reason: "max files limit"})
-			break
-		}
+	for _, f := range res.Files {
 		env.Files = append(env.Files, output.FileItem{Path: f.Name, Score: f.Score, Reasons: f.Reasons})
 	}
-	for i, s := range res.Symbols {
-		if i >= opts.MaxSymbols {
-			env.Omitted = append(env.Omitted, output.Omission{Kind: "symbols", Count: len(res.Symbols) - opts.MaxSymbols, Reason: "max symbols limit"})
-			break
-		}
+	for _, s := range res.Symbols {
 		env.Symbols = append(env.Symbols, output.SymbolItem{Name: s.Name, Score: s.Score, Reasons: s.Reasons})
 	}
-	env.ActualEstimatedTokens = int64(len(env.Files)*80 + len(env.Symbols)*20 + len(env.Tests)*15 + len(env.ReadPlan)*20 + 120)
 	env.Data = map[string]any{"task": res.Task, "avoid": res.Avoid, "savings": res.Savings}
 	return env
 }

@@ -23,6 +23,9 @@ func Run(ctx context.Context, args []string) (Summary, error) {
 	if args[0] != "go" {
 		return Summary{ExitCode: 2}, fmt.Errorf("test-summary only allows commands whose first arg is go")
 	}
+	if len(args) < 2 || args[1] != "test" {
+		return Summary{ExitCode: 2}, fmt.Errorf("test-summary only allows go test commands")
+	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)

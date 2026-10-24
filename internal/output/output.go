@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -198,6 +199,190 @@ func WriteJSON(w io.Writer, env Envelope) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(env)
+}
+
+// ApplyBudget keeps the most relevant context items and records every omitted
+// item. The envelope overhead is intentionally included in the estimate so a
+// caller can compare the reported value with its requested budget.
+func ApplyBudget(env *Envelope, opts Options) {
+	if env == nil {
+		return
+	}
+	files := append([]FileItem(nil), env.Files...)
+	symbols := append([]SymbolItem(nil), env.Symbols...)
+	routes := append([]RouteItem(nil), env.Routes...)
+	tests := append([]string(nil), env.Tests...)
+	readPlan := append([]string(nil), env.ReadPlan...)
+
+	type candidate struct {
+		kind  string
+		index int
+		score int
+		cost  int64
+	}
+	var candidates []candidate
+	for i, f := range files {
+		candidates = append(candidates, candidate{kind: "files", index: i, score: fileRelevance(f), cost: 80})
+	}
+	for i, s := range symbols {
+		candidates = append(candidates, candidate{kind: "symbols", index: i, score: symbolRelevance(s), cost: 20})
+	}
+	for i, r := range routes {
+		candidates = append(candidates, candidate{kind: "routes", index: i, score: routeRelevance(r), cost: 30})
+	}
+	for i := range readPlan {
+		candidates = append(candidates, candidate{kind: "read_plan", index: i, score: 5, cost: 20})
+	}
+	for i := range tests {
+		candidates = append(candidates, candidate{kind: "tests", index: i, score: 45, cost: 15})
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		if candidates[i].score != candidates[j].score {
+			return candidates[i].score > candidates[j].score
+		}
+		if candidates[i].kind != candidates[j].kind {
+			return candidates[i].kind < candidates[j].kind
+		}
+		return candidates[i].index < candidates[j].index
+	})
+
+	selected := map[string]map[int]bool{}
+	for _, kind := range []string{"files", "symbols", "routes", "read_plan", "tests"} {
+		selected[kind] = map[int]bool{}
+	}
+	used := int64(100)
+	for _, c := range candidates {
+		if opts.Budget > 0 && used+c.cost > opts.Budget {
+			continue
+		}
+		selected[c.kind][c.index] = true
+		used += c.cost
+	}
+
+	var omitted []Omission
+	filterFiles := make([]FileItem, 0, len(files))
+	for i, f := range files {
+		if selected["files"][i] {
+			filterFiles = append(filterFiles, f)
+		}
+	}
+	if n := len(files) - len(filterFiles); n > 0 {
+		omitted = append(omitted, Omission{Kind: "files", Count: n, Reason: "budget or max files limit"})
+	}
+	filterSymbols := make([]SymbolItem, 0, len(symbols))
+	for i, s := range symbols {
+		if selected["symbols"][i] {
+			filterSymbols = append(filterSymbols, s)
+		}
+	}
+	if n := len(symbols) - len(filterSymbols); n > 0 {
+		omitted = append(omitted, Omission{Kind: "symbols", Count: n, Reason: "budget or max symbols limit"})
+	}
+	filterRoutes := make([]RouteItem, 0, len(routes))
+	for i, r := range routes {
+		if selected["routes"][i] {
+			filterRoutes = append(filterRoutes, r)
+		}
+	}
+	if n := len(routes) - len(filterRoutes); n > 0 {
+		omitted = append(omitted, Omission{Kind: "routes", Count: n, Reason: "budget or max routes limit"})
+	}
+	filterStrings := func(kind string, values []string) []string {
+		out := make([]string, 0, len(values))
+		for i, value := range values {
+			if selected[kind][i] {
+				out = append(out, value)
+			}
+		}
+		return out
+	}
+	filterReadPlan := filterStrings("read_plan", readPlan)
+	if n := len(readPlan) - len(filterReadPlan); n > 0 {
+		omitted = append(omitted, Omission{Kind: "read_plan", Count: n, Reason: "budget limit"})
+	}
+	filterTests := filterStrings("tests", tests)
+	if n := len(tests) - len(filterTests); n > 0 {
+		omitted = append(omitted, Omission{Kind: "tests", Count: n, Reason: "budget limit"})
+	}
+
+	if opts.MaxFiles > 0 && len(filterFiles) > opts.MaxFiles {
+		omitted = append(omitted, Omission{Kind: "files", Count: len(filterFiles) - opts.MaxFiles, Reason: "max files limit"})
+		filterFiles = filterFiles[:opts.MaxFiles]
+	}
+	if opts.MaxSymbols > 0 && len(filterSymbols) > opts.MaxSymbols {
+		omitted = append(omitted, Omission{Kind: "symbols", Count: len(filterSymbols) - opts.MaxSymbols, Reason: "max symbols limit"})
+		filterSymbols = filterSymbols[:opts.MaxSymbols]
+	}
+	if opts.MaxRoutes > 0 && len(filterRoutes) > opts.MaxRoutes {
+		omitted = append(omitted, Omission{Kind: "routes", Count: len(filterRoutes) - opts.MaxRoutes, Reason: "max routes limit"})
+		filterRoutes = filterRoutes[:opts.MaxRoutes]
+	}
+	env.Files, env.Symbols, env.Routes = filterFiles, filterSymbols, filterRoutes
+	env.ReadPlan, env.Tests = filterReadPlan, filterTests
+	env.Omitted = omitted
+	env.ActualEstimatedTokens = int64(100 + len(env.Files)*80 + len(env.Symbols)*20 + len(env.Routes)*30 + len(env.ReadPlan)*20 + len(env.Tests)*15)
+}
+
+func fileRelevance(f FileItem) int {
+	if f.Score > 0 {
+		return f.Score
+	}
+	path := strings.ToLower(f.Path)
+	score := 20
+	if strings.HasSuffix(path, "main.go") {
+		score += 50
+	}
+	if strings.HasPrefix(path, "cmd/") || strings.Contains(path, "/cmd/") {
+		score += 30
+	}
+	if strings.HasSuffix(path, "_test.go") {
+		score -= 10
+	}
+	return score
+}
+
+func symbolRelevance(s SymbolItem) int {
+	name := strings.ToLower(s.Name)
+	if s.Score > 0 {
+		score := s.Score + 20
+		if symbolNameMatches(name, "load", "package", "extract", "route", "handler", "middleware", "auth", "fallback", "error") {
+			score += 60
+		}
+		if strings.HasPrefix(name, "test") {
+			score += 45
+		}
+		return score
+	}
+	if name == "main" {
+		return 80
+	}
+	if strings.Contains(name, "route") || strings.Contains(name, "handler") || strings.Contains(name, "auth") {
+		return 60
+	}
+	if s.Kind == "func" || s.Kind == "method" {
+		return 40
+	}
+	return 20
+}
+
+func symbolNameMatches(name string, terms ...string) bool {
+	for _, term := range terms {
+		if strings.Contains(name, term) {
+			return true
+		}
+	}
+	return false
+}
+
+func routeRelevance(r RouteItem) int {
+	score := 50
+	if r.Dynamic {
+		score -= 10
+	}
+	if r.Handler != "" {
+		score += 10
+	}
+	return score
 }
 
 func TruncateLines(lines []string, budget int64) ([]string, int, int64) {

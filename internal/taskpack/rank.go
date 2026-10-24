@@ -36,7 +36,11 @@ type Savings struct {
 	ReductionPercent           float64
 }
 
-var stop = map[string]bool{"a": true, "an": true, "and": true, "or": true, "the": true, "to": true, "of": true, "in": true, "for": true, "fix": true, "add": true, "update": true}
+var stop = map[string]bool{
+	"a": true, "an": true, "and": true, "or": true, "the": true, "to": true, "of": true, "in": true, "for": true,
+	"fix": true, "add": true, "update": true, "internal": true, "repo": true, "repository": true, "code": true,
+	"source": true, "task": true, "context": true, "implementation": true,
+}
 
 func Tokenize(s string) []string {
 	s = splitCamel(s)
@@ -62,6 +66,7 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 	fileReasons := map[string][]string{}
 	symScores := map[string]int{}
 	symReasons := map[string][]string{}
+	relevantDirs := map[string]bool{}
 	for _, p := range pkgs {
 		pscore := scoreText(p.ImportPath+" "+p.Name+" "+strings.Join(p.Imports, " "), terms)
 		pkgReasons := reasonsForText(p.ImportPath+" "+p.Name+" "+strings.Join(p.Imports, " "), terms, "package/import matched")
@@ -83,20 +88,23 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 			}
 		}
 		for _, sym := range p.Symbols {
-			s := scoreText(indexer.DisplayName(sym)+" "+sym.File, terms)
+			s := symbolTaskScore(sym, terms)
 			if s > 0 {
 				symScores[indexer.DisplayName(sym)] += s
 				symReasons[indexer.DisplayName(sym)] = append(symReasons[indexer.DisplayName(sym)], reasonsForText(indexer.DisplayName(sym), terms, "symbol matched task")...)
 				fileScores[sym.File] += s
 				fileReasons[sym.File] = append(fileReasons[sym.File], "contains matching symbol "+indexer.DisplayName(sym))
 				pscore += s
+				if !strings.HasSuffix(sym.File, "_test.go") {
+					relevantDirs[dirOf(sym.File)] = true
+				}
 			}
 		}
 		if pscore > 0 {
 			res.Packages = append(res.Packages, RankedItem{Name: p.ImportPath, Score: pscore, Reasons: pkgReasons})
 		}
 		for _, f := range p.TestFiles {
-			if fileScores[strings.TrimSuffix(f, "_test.go")+".go"] > 0 || scoreText(f, terms) > 0 {
+			if relevantDirs[dirOf(f)] || scoreText(f, terms) > 0 {
 				dir := "./" + dirOf(f)
 				res.Tests = appendUnique(res.Tests, "go test "+dir)
 			}
@@ -137,6 +145,34 @@ func scoreText(text string, terms []string) int {
 	return score
 }
 
+func symbolTaskScore(sym indexer.SymbolInfo, terms []string) int {
+	name := indexer.DisplayName(sym)
+	score := scoreText(name+" "+sym.File, terms)
+	if scoreText(sym.File, terms) > 0 && !strings.HasSuffix(sym.File, "_test.go") {
+		score += 6
+	}
+	lowerName := strings.ToLower(splitCamel(name))
+	if containsAny(terms, "route", "routes", "extract", "extraction", "http", "api", "endpoint") && nameContainsAny(lowerName, "route", "extract", "handler", "middleware", "wrapper", "path") {
+		score += 24
+	}
+	if containsAny(terms, "package", "packages", "load", "loader", "loading", "index", "module", "error", "errors", "fallback") && nameContainsAny(lowerName, "load", "package", "module", "import", "fallback", "warning", "error") {
+		score += 24
+	}
+	if sym.Kind == indexer.SymbolTest && containsAny(terms, "test", "error", "errors", "failure", "failing") {
+		score += 12
+	}
+	return score
+}
+
+func nameContainsAny(name string, terms ...string) bool {
+	for _, term := range terms {
+		if strings.Contains(name, term) {
+			return true
+		}
+	}
+	return false
+}
+
 func reasonsForText(text string, terms []string, reason string) []string {
 	text = strings.ToLower(splitCamel(text))
 	for _, t := range terms {
@@ -148,7 +184,23 @@ func reasonsForText(text string, terms []string, reason string) []string {
 }
 
 func expandDomain(terms []string) []string {
-	m := map[string][]string{"auth": {"jwt", "firebase", "token", "middleware"}, "route": {"handler", "echo", "gin", "chi", "http"}, "routes": {"handler", "echo", "gin", "chi", "http"}, "database": {"supabase", "postgres", "sql", "repository"}, "config": {"env", "secret"}, "test": {"failing", "panic", "error"}}
+	m := map[string][]string{
+		"auth":       {"jwt", "firebase", "token", "middleware"},
+		"route":      {"handler", "echo", "gin", "chi", "http", "extract"},
+		"routes":     {"handler", "echo", "gin", "chi", "http", "extract"},
+		"extract":    {"extraction", "route"},
+		"extraction": {"extract", "route"},
+		"loader":     {"load", "package", "packages"},
+		"loading":    {"load", "package", "packages"},
+		"load":       {"loader", "loading"},
+		"package":    {"packages"},
+		"packages":   {"package"},
+		"error":      {"errors", "failure", "fallback", "warning"},
+		"errors":     {"error", "failure", "fallback", "warning"},
+		"database":   {"supabase", "postgres", "sql", "repository"},
+		"config":     {"env", "secret"},
+		"test":       {"failing", "panic", "error"},
+	}
 	seen := map[string]bool{}
 	var out []string
 	for _, t := range terms {

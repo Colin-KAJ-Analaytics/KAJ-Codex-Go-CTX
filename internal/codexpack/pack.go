@@ -34,11 +34,17 @@ func Build(ctx context.Context, task string, opts output.Options) (Result, error
 	if err != nil {
 		return Result{}, err
 	}
-	idx, _ := indexer.LoadPackagesFlexible(ctx, root)
+	idx, err := indexer.LoadPackagesFlexible(ctx, root)
+	if err != nil {
+		return Result{}, err
+	}
 	tp := taskpack.Rank(task, idx.Packages, sc)
 	tp.Warnings = append(tp.Warnings, idx.Warnings...)
 	tp.Confidence = idx.Confidence
-	rt, _ := routes.Extract(root)
+	rt, err := routes.Extract(root)
+	if err != nil {
+		return Result{}, err
+	}
 	return Result{Task: task, Discovery: disc, Index: idx, Scan: sc, TaskPack: tp, Routes: rt, Frameworks: detectFrameworks(idx.Packages), Hints: detectHints(idx.Packages)}, nil
 }
 
