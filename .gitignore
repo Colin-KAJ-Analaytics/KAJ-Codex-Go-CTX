@@ -32,3 +32,6 @@ go.work.sum
 # .vscode/
 cmd/.DS_Store
 .DS_Store
+
+# Local build used for development and verification
+/bin/goctx

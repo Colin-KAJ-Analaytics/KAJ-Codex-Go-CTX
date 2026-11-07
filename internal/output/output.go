@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,16 +21,18 @@ const (
 )
 
 type Options struct {
-	Root       string
-	Module     string
-	AllModules bool
-	Budget     int64
-	MaxFiles   int
-	MaxSymbols int
-	MaxRoutes  int
-	Format     Format
-	Force      bool
-	Strict     bool
+	Root        string
+	Module      string
+	AllModules  bool
+	Budget      int64
+	MaxFiles    int
+	MaxSymbols  int
+	MaxRoutes   int
+	Format      Format
+	Force       bool
+	Strict      bool
+	Quiet       bool
+	CompactJSON bool
 }
 
 type Omission struct {
@@ -59,6 +62,7 @@ type SymbolItem struct {
 }
 
 type RouteItem struct {
+	Score   int    `json:"score,omitempty"`
 	Method  string `json:"method"`
 	Path    string `json:"path"`
 	File    string `json:"file"`
@@ -68,6 +72,7 @@ type RouteItem struct {
 }
 
 type Envelope struct {
+	CompactJSON           bool         `json:"-"`
 	Command               string       `json:"command"`
 	Root                  string       `json:"root,omitempty"`
 	Module                string       `json:"module,omitempty"`
@@ -148,6 +153,10 @@ func ParseCommon(args []string, opts *Options) ([]string, error) {
 				return nil, fmt.Errorf("invalid --format %q: use text, json, or markdown", args[i])
 			}
 			opts.Format = f
+		case "--quiet":
+			opts.Quiet = true
+		case "--compact-json":
+			opts.CompactJSON = true
 		case "--force":
 			opts.Force = true
 		case "--strict":
@@ -174,7 +183,9 @@ func EstimateText(s string) int64 {
 	return tokens.Estimate(int64(len(s)))
 }
 
-func WriteJSON(w io.Writer, env Envelope) error {
+// marshalEnvelope includes the trailing newline and formatting actually sent
+// to the caller. The estimate is byte-based, not a model tokenizer count.
+func marshalEnvelope(env Envelope) ([]byte, error) {
 	if env.Warnings == nil {
 		env.Warnings = []string{}
 	}
@@ -196,45 +207,96 @@ func WriteJSON(w io.Writer, env Envelope) error {
 	if env.ReadPlan == nil {
 		env.ReadPlan = []string{}
 	}
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-	return enc.Encode(env)
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	if !env.CompactJSON {
+		enc.SetIndent("", "  ")
+	}
+	if err := enc.Encode(env); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
-// ApplyBudget keeps the most relevant context items and records every omitted
-// item. The envelope overhead is intentionally included in the estimate so a
-// caller can compare the reported value with its requested budget.
+func measuredEnvelope(env Envelope) ([]byte, int64, error) {
+	// Only the number's digit count affects the next estimate; convergence takes
+	// a handful of passes even near a power-of-ten boundary.
+	for i := 0; i < 10; i++ {
+		data, err := marshalEnvelope(env)
+		if err != nil {
+			return nil, 0, err
+		}
+		n := tokens.Estimate(int64(len(data)))
+		if n == env.ActualEstimatedTokens {
+			return data, n, nil
+		}
+		env.ActualEstimatedTokens = n
+	}
+	return nil, 0, fmt.Errorf("output estimate did not converge")
+}
+
+func WriteJSON(w io.Writer, env Envelope, options ...Options) error {
+	if len(options) > 0 {
+		env.CompactJSON = options[0].CompactJSON
+	}
+	data, _, err := measuredEnvelope(env)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(data)
+	return err
+}
+
+// ApplyBudget selects whole items by relevance using their serialized size.
+// Mandatory metadata is retained even if the requested budget is too small;
+// that case is reported explicitly rather than understating the output size.
 func ApplyBudget(env *Envelope, opts Options) {
 	if env == nil {
 		return
 	}
+	env.CompactJSON = opts.CompactJSON
+	env.BudgetEstimatedTokens = opts.Budget
 	files := append([]FileItem(nil), env.Files...)
 	symbols := append([]SymbolItem(nil), env.Symbols...)
 	routes := append([]RouteItem(nil), env.Routes...)
 	tests := append([]string(nil), env.Tests...)
 	readPlan := append([]string(nil), env.ReadPlan...)
-
+	if opts.Quiet {
+		for i := range files {
+			files[i].Reasons = nil
+		}
+		for i := range symbols {
+			symbols[i].Reasons = nil
+		}
+		if data, ok := env.Data.(map[string]any); ok {
+			copy := map[string]any{}
+			for k, v := range data {
+				if k != "avoid" && k != "savings" {
+					copy[k] = v
+				}
+			}
+			env.Data = copy
+		}
+	}
 	type candidate struct {
-		kind  string
-		index int
-		score int
-		cost  int64
+		kind         string
+		index, score int
 	}
 	var candidates []candidate
 	for i, f := range files {
-		candidates = append(candidates, candidate{kind: "files", index: i, score: fileRelevance(f), cost: 80})
+		candidates = append(candidates, candidate{"files", i, fileRelevance(f)})
 	}
-	for i, s := range symbols {
-		candidates = append(candidates, candidate{kind: "symbols", index: i, score: symbolRelevance(s), cost: 20})
+	for i, v := range symbols {
+		candidates = append(candidates, candidate{"symbols", i, symbolRelevance(v)})
 	}
-	for i, r := range routes {
-		candidates = append(candidates, candidate{kind: "routes", index: i, score: routeRelevance(r), cost: 30})
-	}
-	for i := range readPlan {
-		candidates = append(candidates, candidate{kind: "read_plan", index: i, score: 5, cost: 20})
+	for i, v := range routes {
+		candidates = append(candidates, candidate{"routes", i, routeRelevance(v)})
 	}
 	for i := range tests {
-		candidates = append(candidates, candidate{kind: "tests", index: i, score: 45, cost: 15})
+		candidates = append(candidates, candidate{"tests", i, 70})
+	}
+	for i := range readPlan {
+		candidates = append(candidates, candidate{"read_plan", i, 65})
 	}
 	sort.SliceStable(candidates, func(i, j int) bool {
 		if candidates[i].score != candidates[j].score {
@@ -245,82 +307,70 @@ func ApplyBudget(env *Envelope, opts Options) {
 		}
 		return candidates[i].index < candidates[j].index
 	})
-
-	selected := map[string]map[int]bool{}
-	for _, kind := range []string{"files", "symbols", "routes", "read_plan", "tests"} {
-		selected[kind] = map[int]bool{}
-	}
-	used := int64(100)
-	for _, c := range candidates {
-		if opts.Budget > 0 && used+c.cost > opts.Budget {
-			continue
-		}
-		selected[c.kind][c.index] = true
-		used += c.cost
-	}
-
-	var omitted []Omission
-	filterFiles := make([]FileItem, 0, len(files))
-	for i, f := range files {
-		if selected["files"][i] {
-			filterFiles = append(filterFiles, f)
-		}
-	}
-	if n := len(files) - len(filterFiles); n > 0 {
-		omitted = append(omitted, Omission{Kind: "files", Count: n, Reason: "budget or max files limit"})
-	}
-	filterSymbols := make([]SymbolItem, 0, len(symbols))
-	for i, s := range symbols {
-		if selected["symbols"][i] {
-			filterSymbols = append(filterSymbols, s)
-		}
-	}
-	if n := len(symbols) - len(filterSymbols); n > 0 {
-		omitted = append(omitted, Omission{Kind: "symbols", Count: n, Reason: "budget or max symbols limit"})
-	}
-	filterRoutes := make([]RouteItem, 0, len(routes))
-	for i, r := range routes {
-		if selected["routes"][i] {
-			filterRoutes = append(filterRoutes, r)
-		}
-	}
-	if n := len(routes) - len(filterRoutes); n > 0 {
-		omitted = append(omitted, Omission{Kind: "routes", Count: n, Reason: "budget or max routes limit"})
-	}
-	filterStrings := func(kind string, values []string) []string {
-		out := make([]string, 0, len(values))
-		for i, value := range values {
-			if selected[kind][i] {
-				out = append(out, value)
+	prior := append([]Omission(nil), env.Omitted...)
+	env.Files, env.Symbols, env.Routes, env.Tests, env.ReadPlan = nil, nil, nil, nil, nil
+	updateOmissions := func() {
+		env.Omitted = append([]Omission(nil), prior...)
+		for _, item := range []struct {
+			kind    string
+			missing int
+		}{
+			{"files", len(files) - len(env.Files)}, {"symbols", len(symbols) - len(env.Symbols)},
+			{"routes", len(routes) - len(env.Routes)}, {"tests", len(tests) - len(env.Tests)}, {"read_plan", len(readPlan) - len(env.ReadPlan)},
+		} {
+			if item.missing > 0 {
+				env.Omitted = append(env.Omitted, Omission{item.kind, item.missing, "budget or item limit"})
 			}
 		}
-		return out
 	}
-	filterReadPlan := filterStrings("read_plan", readPlan)
-	if n := len(readPlan) - len(filterReadPlan); n > 0 {
-		omitted = append(omitted, Omission{Kind: "read_plan", Count: n, Reason: "budget limit"})
+	for _, c := range candidates {
+		switch c.kind {
+		case "files":
+			if opts.MaxFiles > 0 && len(env.Files) >= opts.MaxFiles {
+				continue
+			}
+			env.Files = append(env.Files, files[c.index])
+		case "symbols":
+			if opts.MaxSymbols > 0 && len(env.Symbols) >= opts.MaxSymbols {
+				continue
+			}
+			env.Symbols = append(env.Symbols, symbols[c.index])
+		case "routes":
+			if opts.MaxRoutes > 0 && len(env.Routes) >= opts.MaxRoutes {
+				continue
+			}
+			env.Routes = append(env.Routes, routes[c.index])
+		case "tests":
+			env.Tests = append(env.Tests, tests[c.index])
+		case "read_plan":
+			env.ReadPlan = append(env.ReadPlan, readPlan[c.index])
+		}
+		updateOmissions()
+		_, n, err := measuredEnvelope(*env)
+		if err != nil || (opts.Budget > 0 && n > opts.Budget) {
+			switch c.kind {
+			case "files":
+				env.Files = env.Files[:len(env.Files)-1]
+			case "symbols":
+				env.Symbols = env.Symbols[:len(env.Symbols)-1]
+			case "routes":
+				env.Routes = env.Routes[:len(env.Routes)-1]
+			case "tests":
+				env.Tests = env.Tests[:len(env.Tests)-1]
+			case "read_plan":
+				env.ReadPlan = env.ReadPlan[:len(env.ReadPlan)-1]
+			}
+		}
 	}
-	filterTests := filterStrings("tests", tests)
-	if n := len(tests) - len(filterTests); n > 0 {
-		omitted = append(omitted, Omission{Kind: "tests", Count: n, Reason: "budget limit"})
+	updateOmissions()
+	_, n, err := measuredEnvelope(*env)
+	if err != nil {
+		env.Warnings = append(env.Warnings, "cannot estimate JSON: "+err.Error())
 	}
-
-	if opts.MaxFiles > 0 && len(filterFiles) > opts.MaxFiles {
-		omitted = append(omitted, Omission{Kind: "files", Count: len(filterFiles) - opts.MaxFiles, Reason: "max files limit"})
-		filterFiles = filterFiles[:opts.MaxFiles]
+	if opts.Budget > 0 && n > opts.Budget {
+		env.Warnings = append(env.Warnings, "mandatory metadata exceeds requested budget; increase --budget")
 	}
-	if opts.MaxSymbols > 0 && len(filterSymbols) > opts.MaxSymbols {
-		omitted = append(omitted, Omission{Kind: "symbols", Count: len(filterSymbols) - opts.MaxSymbols, Reason: "max symbols limit"})
-		filterSymbols = filterSymbols[:opts.MaxSymbols]
-	}
-	if opts.MaxRoutes > 0 && len(filterRoutes) > opts.MaxRoutes {
-		omitted = append(omitted, Omission{Kind: "routes", Count: len(filterRoutes) - opts.MaxRoutes, Reason: "max routes limit"})
-		filterRoutes = filterRoutes[:opts.MaxRoutes]
-	}
-	env.Files, env.Symbols, env.Routes = filterFiles, filterSymbols, filterRoutes
-	env.ReadPlan, env.Tests = filterReadPlan, filterTests
-	env.Omitted = omitted
-	env.ActualEstimatedTokens = int64(100 + len(env.Files)*80 + len(env.Symbols)*20 + len(env.Routes)*30 + len(env.ReadPlan)*20 + len(env.Tests)*15)
+	_, env.ActualEstimatedTokens, _ = measuredEnvelope(*env)
 }
 
 func fileRelevance(f FileItem) int {
@@ -375,6 +425,9 @@ func symbolNameMatches(name string, terms ...string) bool {
 }
 
 func routeRelevance(r RouteItem) int {
+	if r.Score > 0 {
+		return r.Score
+	}
 	score := 50
 	if r.Dynamic {
 		score -= 10

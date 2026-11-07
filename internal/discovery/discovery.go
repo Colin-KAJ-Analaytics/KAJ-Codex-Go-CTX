@@ -121,9 +121,11 @@ func WriteText(w io.Writer, res Result) {
 	}
 }
 
-func WriteJSON(w io.Writer, res Result) error {
+func WriteJSON(w io.Writer, res Result, compact ...bool) error {
 	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
+	if len(compact) == 0 || !compact[0] {
+		enc.SetIndent("", "  ")
+	}
 	return enc.Encode(res)
 }
 

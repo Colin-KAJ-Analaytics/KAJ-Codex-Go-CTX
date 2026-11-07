@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -47,5 +48,18 @@ func TestLoadPackagesFlexibleASTFallback(t *testing.T) {
 	}
 	if len(res.Packages) == 0 || len(res.Packages[0].Symbols) == 0 {
 		t.Fatalf("expected AST fallback symbols, got %#v", res)
+	}
+}
+
+func TestFallbackImportsUsesGoSyntax(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "imports.go")
+	src := "package p\nimport (\n alias \"example.com/alias\"\n _ \"example.com/side\"\n . `example.com/dot`\n \"fmt\"\n)\nvar fake = `\n\"not-an-import\"\n`\n"
+	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	got := importsForFile(path)
+	want := []string{"example.com/alias", "example.com/dot", "example.com/side", "fmt"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
 	}
 }

@@ -1,6 +1,6 @@
 package cli
 
-const Usage = `goctx - Go repository context optimizer for Codex
+const Usage = `goctx - Go repository context optimizer for Codex and Claude Code
 
 Commands:
   help                              Print this help.
@@ -19,9 +19,12 @@ Commands:
   doctor                            Check goctx readiness in the current repository.
   smells                            Report token/navigation risk smells.
   init-codex [--force] [--strict]   Generate conservative Codex integration files.
+  init-claude [--force] [--strict]  Link Claude instructions to shared AGENTS.md.
 
 Common flags on context commands:
   --root <path> --module <path-or-name> --all-modules
   --budget <estimated-tokens> --max-files <n> --max-symbols <n> --max-routes <n>
   --format text|json|markdown
+  --quiet                         Omit pack explanations and static advice.
+  --compact-json                  Serialize JSON without indentation.
 `

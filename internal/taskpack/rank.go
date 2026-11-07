@@ -12,6 +12,8 @@ import (
 
 type RankedItem struct {
 	Name    string
+	File    string
+	Line    int
 	Score   int
 	Reasons []string
 }
@@ -66,6 +68,7 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 	fileReasons := map[string][]string{}
 	symScores := map[string]int{}
 	symReasons := map[string][]string{}
+	symLocations := map[string]indexer.SymbolInfo{}
 	relevantDirs := map[string]bool{}
 	for _, p := range pkgs {
 		pscore := scoreText(p.ImportPath+" "+p.Name+" "+strings.Join(p.Imports, " "), terms)
@@ -90,8 +93,10 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 		for _, sym := range p.Symbols {
 			s := symbolTaskScore(sym, terms)
 			if s > 0 {
-				symScores[indexer.DisplayName(sym)] += s
-				symReasons[indexer.DisplayName(sym)] = append(symReasons[indexer.DisplayName(sym)], reasonsForText(indexer.DisplayName(sym), terms, "symbol matched task")...)
+				key := sym.File + "\x00" + indexer.DisplayName(sym)
+				symLocations[key] = sym
+				symScores[key] += s
+				symReasons[key] = append(symReasons[key], reasonsForText(indexer.DisplayName(sym), terms, "symbol matched task")...)
 				fileScores[sym.File] += s
 				fileReasons[sym.File] = append(fileReasons[sym.File], "contains matching symbol "+indexer.DisplayName(sym))
 				pscore += s
@@ -117,7 +122,7 @@ func Rank(task string, pkgs []indexer.PackageInfo, scan scanner.Result) Result {
 	}
 	for s, score := range symScores {
 		if score > 0 {
-			res.Symbols = append(res.Symbols, RankedItem{Name: s, Score: score, Reasons: uniqueStrings(symReasons[s])})
+			res.Symbols = append(res.Symbols, RankedItem{Name: indexer.DisplayName(symLocations[s]), File: symLocations[s].File, Line: symLocations[s].StartLine, Score: score, Reasons: uniqueStrings(symReasons[s])})
 		}
 	}
 	sortRanked(res.Packages)
@@ -234,7 +239,13 @@ func splitCamel(s string) string {
 func sortRanked(xs []RankedItem) {
 	sort.Slice(xs, func(i, j int) bool {
 		if xs[i].Score == xs[j].Score {
-			return xs[i].Name < xs[j].Name
+			if xs[i].Name != xs[j].Name {
+				return xs[i].Name < xs[j].Name
+			}
+			if xs[i].File != xs[j].File {
+				return xs[i].File < xs[j].File
+			}
+			return xs[i].Line < xs[j].Line
 		}
 		return xs[i].Score > xs[j].Score
 	})
@@ -291,26 +302,14 @@ func applyFilePenalty(scan scanner.Result, path string, score int) int {
 func buildReadPlan(res Result) []string {
 	var plan []string
 	for _, f := range top(res.Files, 5) {
-		plan = append(plan, "goctx symbols "+f.Name)
+		plan = append(plan, "goctx symbols "+shellArg(f.Name))
 	}
 	for i, s := range res.Symbols {
 		if i >= 5 {
 			break
 		}
-		file := ""
-		for _, f := range res.Files {
-			for _, r := range f.Reasons {
-				if strings.Contains(r, s.Name) {
-					file = f.Name
-					break
-				}
-			}
-			if file != "" {
-				break
-			}
-		}
-		if file != "" {
-			plan = append(plan, "goctx slice "+file+" --symbol "+s.Name)
+		if s.File != "" {
+			plan = append(plan, "goctx slice "+shellArg(s.File)+" --symbol "+shellArg(s.Name))
 		}
 	}
 	for _, t := range res.Tests {
@@ -352,4 +351,12 @@ func ignored(scan scanner.Result, path string) bool {
 		}
 	}
 	return false
+}
+
+// shellArg preserves filenames and method names when a read plan is copied to a shell.
+func shellArg(s string) string {
+	if s != "" && !strings.ContainsAny(s, " \t\n\r'\"`$;&|<>()*?[]{}!#~\\") {
+		return s
+	}
+	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }

@@ -11,6 +11,7 @@ type FileResult struct {
 	Path    string
 	Created bool
 	Skipped bool
+	Updated bool
 }
 
 func Init(root string, force bool) ([]FileResult, error) {
@@ -63,6 +64,8 @@ func FormatResults(results []FileResult) string {
 	for _, r := range results {
 		if r.Skipped {
 			out += fmt.Sprintf("skipped: %s\n", r.Path)
+		} else if r.Updated {
+			out += fmt.Sprintf("updated: %s\n", r.Path)
 		} else if r.Created {
 			out += fmt.Sprintf("created: %s\n", r.Path)
 		}

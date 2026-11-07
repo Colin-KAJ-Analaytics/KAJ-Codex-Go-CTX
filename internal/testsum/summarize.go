@@ -40,101 +40,144 @@ func Run(ctx context.Context, args []string) (Summary, error) {
 			exit = ee.ExitCode()
 		}
 	}
-	return Summary{Output: Summarize(out.String()), ExitCode: exit}, nil
+	raw := out.String()
+	if err != nil {
+		if ctx.Err() != nil {
+			raw += "\n" + ctx.Err().Error()
+		} else if _, ok := err.(*exec.ExitError); !ok {
+			raw += "\n" + err.Error()
+		}
+		if exit < 1 {
+			exit = 1
+		}
+	}
+	return Summary{Output: SummarizeWithExit(raw, exit), ExitCode: exit}, nil
 }
 
-func Summarize(raw string) string {
+// Summarize infers status from anchored Go test records. Run uses the process
+// exit code instead, including failures that never produce a FAIL record.
+func Summarize(raw string) string { return summarize(raw, nil) }
+
+func SummarizeWithExit(raw string, exit int) string { return summarize(raw, &exit) }
+
+const maxSummaryBytes = 12000
+
+var (
+	failTestRE = regexp.MustCompile(`^--- FAIL: (.+) \([0-9.]+s\)$`)
+	failPkgRE  = regexp.MustCompile(`^FAIL(?:\s+(\S+))?(?:\s|$)`)
+	passRE     = regexp.MustCompile(`^(?:ok\s|PASS$|\?\s+\S+\s+\[no test files\])`)
+	refRE      = regexp.MustCompile(`([A-Za-z0-9_./\\:-]+\.go:\d+)`)
+)
+
+func summarize(raw string, exit *int) string {
 	lines := strings.Split(raw, "\n")
-	var failedPkgs, failedTests, refs, panics, expected []string
-	failTestRE := regexp.MustCompile(`^--- FAIL: ([A-Za-z0-9_]+)`)
-	failPkgRE := regexp.MustCompile(`^(FAIL)\s+(\S+)`)
-	refRE := regexp.MustCompile(`([A-Za-z0-9_./-]+\.go:\d+)`)
+	var failedPkgs, failedTests, refs, panics, expected, diagnostics []string
+	failure, passed := false, false
+	omitted := 0
+	seen := map[string]bool{}
+	add := func(dst *[]string, value string, limit int, kind string) {
+		key := kind + "\x00" + value
+		if seen[key] {
+			return
+		}
+		seen[key] = true
+		if len(*dst) >= limit {
+			omitted++
+			return
+		}
+		if len(value) > 500 {
+			value = value[:500] + " ... [line shortened]"
+			omitted++
+		}
+		*dst = append(*dst, value)
+	}
 	for _, line := range lines {
 		t := strings.TrimSpace(line)
 		if t == "" {
 			continue
 		}
 		if m := failTestRE.FindStringSubmatch(t); m != nil {
-			failedTests = appendUnique(failedTests, m[1])
+			failure = true
+			add(&failedTests, m[1], 20, "test")
 		}
 		if m := failPkgRE.FindStringSubmatch(t); m != nil {
-			failedPkgs = appendUnique(failedPkgs, m[2])
-		}
-		if strings.Contains(strings.ToLower(t), "panic") {
-			panics = appendBounded(panics, t, 8)
-		}
-		low := strings.ToLower(t)
-		if strings.Contains(low, "expected") || strings.Contains(low, "actual") || strings.Contains(low, "got ") || strings.Contains(low, "want ") {
-			expected = appendBounded(expected, t, 12)
-		}
-		for _, m := range refRE.FindAllString(t, -1) {
-			refs = appendUnique(refs, m)
-		}
-	}
-	var b strings.Builder
-	if strings.Contains(raw, "FAIL") || len(failedTests) > 0 {
-		if len(failedPkgs) > 0 {
-			fmt.Fprintf(&b, "FAIL %s\n\n", strings.Join(failedPkgs, ", "))
-		} else {
-			b.WriteString("FAIL\n\n")
-		}
-		if len(failedTests) > 0 {
-			b.WriteString("Failed tests:\n")
-			for i, t := range failedTests {
-				fmt.Fprintf(&b, "%d. %s\n", i+1, t)
+			failure = true
+			if m[1] != "" {
+				add(&failedPkgs, m[1], 10, "pkg")
 			}
 		}
-	} else {
+		passed = passed || passRE.MatchString(t)
+		low := strings.ToLower(t)
+		isPanic := strings.HasPrefix(t, "panic:") || strings.HasPrefix(t, "fatal error:")
+		if isPanic {
+			failure = true
+			add(&panics, t, 8, "panic")
+		}
+		if strings.Contains(low, "expected") || strings.Contains(low, "actual") || strings.Contains(low, "got ") || strings.Contains(low, "want ") {
+			add(&expected, t, 12, "message")
+		}
+		matches := refRE.FindAllString(t, -1)
+		for _, m := range matches {
+			add(&refs, m, 10, "ref")
+		}
+		// Keep compiler/setup diagnostics, not just their source locations.
+		if len(matches) > 0 || strings.HasPrefix(t, "# ") || strings.HasPrefix(t, "go:") {
+			add(&diagnostics, t, 8, "diagnostic")
+		}
+	}
+	if exit != nil {
+		failure = *exit != 0
+		passed = *exit == 0
+	}
+	var b strings.Builder
+	if failure {
+		b.WriteString("FAIL")
+		if len(failedPkgs) > 0 {
+			b.WriteString(" " + strings.Join(failedPkgs, ", "))
+		}
+		if exit != nil {
+			fmt.Fprintf(&b, " (exit %d)", *exit)
+		}
+		b.WriteByte('\n')
+		// Launch/setup errors can lack a Go diagnostic prefix. Retain bounded
+		// initial output so a nonzero exit always has an explanation when available.
+		if len(diagnostics) == 0 && len(failedTests) == 0 && len(panics) == 0 && len(expected) == 0 {
+			for _, line := range lines {
+				if t := strings.TrimSpace(line); t != "" {
+					add(&diagnostics, t, 8, "diagnostic")
+				}
+			}
+		}
+	} else if passed {
 		b.WriteString("Tests passed.\n")
+	} else {
+		b.WriteString("Test status unknown (no result records).\n")
 	}
-	if len(expected) > 0 {
-		b.WriteString("\nKey messages:\n")
-		for _, l := range expected {
-			fmt.Fprintf(&b, "- %s\n", l)
+	for _, section := range []struct {
+		name  string
+		lines []string
+	}{
+		{"Failed tests", failedTests}, {"Diagnostics", diagnostics}, {"Key messages", expected}, {"Panic lines", panics}, {"Relevant file references", refs},
+	} {
+		if len(section.lines) == 0 {
+			continue
+		}
+		fmt.Fprintf(&b, "\n%s:\n", section.name)
+		for _, line := range section.lines {
+			fmt.Fprintf(&b, "- %s\n", line)
 		}
 	}
-	if len(panics) > 0 {
-		b.WriteString("\nPanic lines:\n")
-		for _, l := range panics {
-			fmt.Fprintf(&b, "- %s\n", l)
-		}
+	if omitted > 0 {
+		fmt.Fprintf(&b, "\nOmitted: %d additional or oversized diagnostic items.\n", omitted)
 	}
-	if len(refs) > 0 {
-		b.WriteString("\nRelevant file references:\n")
-		for _, r := range refs {
-			fmt.Fprintf(&b, "- %s\n", r)
-		}
+	if len(lines) > 80 {
+		fmt.Fprintf(&b, "Raw output summarized: %d lines (request raw output for full details).\n", len(lines))
 	}
-	if n := nonEmpty(lines); n > 80 {
-		fmt.Fprintf(&b, "\nRaw output omitted: %d lines suppressed\n", n)
+	result := b.String()
+	if len(result) > maxSummaryBytes {
+		result = result[:maxSummaryBytes-100] + "\nOmitted: additional diagnostics due to summary size limit.\n"
 	}
-	return b.String()
+	return result
 }
 
 func WriteSummary(w io.Writer, raw string) { _, _ = io.WriteString(w, Summarize(raw)) }
-
-func appendUnique(xs []string, x string) []string {
-	for _, v := range xs {
-		if v == x {
-			return xs
-		}
-	}
-	return append(xs, x)
-}
-
-func appendBounded(xs []string, x string, max int) []string {
-	if len(xs) >= max {
-		return xs
-	}
-	return append(xs, x)
-}
-
-func nonEmpty(lines []string) int {
-	n := 0
-	for _, l := range lines {
-		if strings.TrimSpace(l) != "" {
-			n++
-		}
-	}
-	return n
-}

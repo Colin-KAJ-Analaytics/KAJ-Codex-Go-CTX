@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 
@@ -107,12 +108,17 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			return usageErr(stderr, errOrUsage(err, "usage: goctx smells [flags]"))
 		}
 		return runSmells(opts, stdout, stderr)
-	case "init-codex":
+	case "init-codex", "init-claude":
 		rest, err := output.ParseCommon(args[1:], &opts)
 		if err != nil || len(rest) != 0 {
-			return usageErr(stderr, errOrUsage(err, "usage: goctx init-codex [--force] [--strict]"))
+			return usageErr(stderr, errOrUsage(err, "usage: goctx "+args[0]+" [--root path] [--force] [--strict]"))
 		}
-		res, err := codex.InitWithOptions(root, opts.Force, opts.Strict)
+		var res []codex.FileResult
+		if args[0] == "init-claude" {
+			res, err = codex.InitClaude(opts.Root, opts.Force, opts.Strict)
+		} else {
+			res, err = codex.InitWithOptions(opts.Root, opts.Force, opts.Strict)
+		}
 		if err != nil {
 			fmt.Fprintln(stderr, "error:", err)
 			return 1
@@ -134,7 +140,7 @@ func runScan(opts output.Options, stdout, stderr io.Writer) int {
 	if opts.Format == output.FormatJSON {
 		env := output.Envelope{Command: "scan", Root: opts.Root, BudgetEstimatedTokens: opts.Budget, Confidence: "high"}
 		env.Files, env.Omitted, env.ActualEstimatedTokens = budgetedFileItems(sc.Files, opts, false)
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
 	counts := map[scanner.FileKind]int{}
@@ -172,7 +178,7 @@ func runDiscover(opts output.Options, stdout, stderr io.Writer) int {
 		return 1
 	}
 	if opts.Format == output.FormatJSON {
-		_ = discovery.WriteJSON(stdout, res)
+		_ = discovery.WriteJSON(stdout, res, opts.CompactJSON)
 		return 0
 	}
 	discovery.WriteText(stdout, res)
@@ -201,7 +207,7 @@ func runMap(opts output.Options, stdout, stderr io.Writer) int {
 			}
 		}
 		output.ApplyBudget(&env, opts)
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
 	if len(idx.Warnings) > 0 {
@@ -289,12 +295,11 @@ func runTask(opts output.Options, task string, stdout, stderr io.Writer) int {
 	res.Confidence = idx.Confidence
 	if opts.Format == output.FormatJSON {
 		env := taskEnvelope("task", root, disc.Selected, res, opts)
-		env.Warnings = append(env.Warnings, idx.Warnings...)
 		output.ApplyBudget(&env, opts)
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
-	taskpack.Write(stdout, res)
+	codexpack.WriteText(stdout, codexpack.Result{Task: task, Discovery: disc, Index: idx, Scan: sc, TaskPack: res}, opts)
 	return 0
 }
 
@@ -306,8 +311,7 @@ func runCodexPack(opts output.Options, task string, stdout, stderr io.Writer) in
 	}
 	if opts.Format == output.FormatJSON {
 		env := codexpack.Envelope("codex-pack", res, opts)
-		output.ApplyBudget(&env, opts)
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
 	codexpack.WriteText(stdout, res, opts)
@@ -332,7 +336,7 @@ func runRoutes(opts output.Options, stdout, stderr io.Writer) int {
 		}
 		env.ActualEstimatedTokens = int64(len(env.Routes)*30 + 100)
 		env.Data = map[string]any{"wrapper_candidates": res.WrapperCandidates}
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
 	fmt.Fprintln(stdout, "Routes:")
@@ -413,7 +417,7 @@ func runTokenReport(opts output.Options, stdout, stderr io.Writer) int {
 	if opts.Format == output.FormatJSON {
 		env := output.Envelope{Command: "token-report", Root: opts.Root, BudgetEstimatedTokens: opts.Budget, Confidence: "high"}
 		env.Files, env.Omitted, env.ActualEstimatedTokens = budgetedFileItems(sc.Files, opts, true)
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
 	tokens.Report(stdout, sc)
@@ -435,6 +439,11 @@ func runDoctor(opts output.Options, stdout, stderr io.Writer) int {
 	}
 	env := output.Envelope{Command: "doctor", Root: root, Module: disc.Selected, Confidence: idx.Confidence, Warnings: append(disc.Warnings, idx.Warnings...)}
 	checks := []string{}
+	if path, err := exec.LookPath("goctx"); err == nil {
+		checks = append(checks, "OK   goctx on PATH: "+path)
+	} else {
+		checks = append(checks, "WARN goctx missing from PATH; from the goctx source directory run: go install ./cmd/goctx; add GOBIN (or GOPATH/bin) to PATH")
+	}
 	checks = append(checks, "OK   current directory: "+opts.Root)
 	if len(disc.Modules) > 0 {
 		checks = append(checks, "OK   Go module discovered: "+disc.Selected)
@@ -458,10 +467,15 @@ func runDoctor(opts output.Options, stdout, stderr io.Writer) int {
 			checks = append(checks, "WARN "+p+" missing")
 		}
 	}
+	for _, rel := range []string{"CLAUDE.md", ".claude/CLAUDE.md"} {
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); err == nil {
+			checks = append(checks, "OK   Claude instructions: "+rel)
+		}
+	}
 	env.Data = map[string]any{"checks": checks}
 	env.ActualEstimatedTokens = int64(len(checks)*20 + 80)
 	if opts.Format == output.FormatJSON {
-		_ = output.WriteJSON(stdout, env)
+		_ = output.WriteJSON(stdout, env, opts)
 		return 0
 	}
 	for _, c := range checks {
@@ -479,7 +493,7 @@ func runSmells(opts output.Options, stdout, stderr io.Writer) int {
 		return 1
 	}
 	if opts.Format == output.FormatJSON {
-		_ = output.WriteJSON(stdout, smells.Envelope(res, opts))
+		_ = output.WriteJSON(stdout, smells.Envelope(res, opts), opts)
 		return 0
 	}
 	smells.WriteText(stdout, res, opts)
@@ -561,7 +575,7 @@ func taskEnvelope(command, root, module string, res taskpack.Result, opts output
 		env.Files = append(env.Files, output.FileItem{Path: f.Name, Score: f.Score, Reasons: f.Reasons})
 	}
 	for _, s := range res.Symbols {
-		env.Symbols = append(env.Symbols, output.SymbolItem{Name: s.Name, Score: s.Score, Reasons: s.Reasons})
+		env.Symbols = append(env.Symbols, output.SymbolItem{Name: s.Name, File: s.File, Line: s.Line, Score: s.Score, Reasons: s.Reasons})
 	}
 	env.Data = map[string]any{"task": res.Task, "avoid": res.Avoid, "savings": res.Savings}
 	return env

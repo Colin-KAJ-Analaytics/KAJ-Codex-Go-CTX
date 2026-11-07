@@ -1,6 +1,7 @@
 package taskpack
 
 import (
+	"strings"
 	"testing"
 
 	"goctx/internal/indexer"
@@ -78,4 +79,28 @@ func hasRanked(items []RankedItem, name string) bool {
 		}
 	}
 	return false
+}
+
+func TestReadPlanUsesSymbolLocationWithoutReasonText(t *testing.T) {
+	r := Result{Files: []RankedItem{{Name: "wrong.go", Reasons: []string{"contains Run"}}}, Symbols: []RankedItem{{Name: "(*Worker).Run", File: "folder with spaces/worker.go"}}}
+	got := strings.Join(buildReadPlan(r), "\n")
+	if !strings.Contains(got, "goctx slice 'folder with spaces/worker.go' --symbol '(*Worker).Run'") {
+		t.Fatal(got)
+	}
+}
+
+func TestSameNamedSymbolsKeepDistinctLocations(t *testing.T) {
+	pkgs := []indexer.PackageInfo{{ImportPath: "p", Files: []string{"a/auth.go", "b/auth.go"}, Symbols: []indexer.SymbolInfo{
+		{Name: "VerifyToken", File: "a/auth.go", StartLine: 3}, {Name: "VerifyToken", File: "b/auth.go", StartLine: 7},
+	}}}
+	r := Rank("VerifyToken", pkgs, scanner.Result{})
+	found := map[string]bool{}
+	for _, s := range r.Symbols {
+		if s.Name == "VerifyToken" {
+			found[s.File] = true
+		}
+	}
+	if len(found) != 2 {
+		t.Fatalf("merged distinct symbols: %#v", r.Symbols)
+	}
 }

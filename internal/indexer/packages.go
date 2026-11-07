@@ -2,9 +2,12 @@ package indexer
 
 import (
 	"context"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"goctx/internal/scanner"
@@ -224,24 +227,17 @@ func packageName(path string) string {
 }
 
 func importsForFile(path string) []string {
-	data, err := os.ReadFile(path)
+	f, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
 	if err != nil {
 		return nil
 	}
 	var imports []string
-	for _, l := range strings.Split(string(data), "\n") {
-		l = strings.TrimSpace(l)
-		if strings.HasPrefix(l, "\"") && strings.HasSuffix(l, "\"") {
-			imports = append(imports, strings.Trim(l, "\""))
-		}
-		if strings.HasPrefix(l, "import ") && strings.Contains(l, "\"") {
-			parts := strings.Split(l, "\"")
-			if len(parts) >= 2 {
-				imports = append(imports, parts[1])
-			}
+	for _, spec := range f.Imports {
+		if path, err := strconv.Unquote(spec.Path.Value); err == nil {
+			imports = append(imports, path)
 		}
 	}
-	return imports
+	return uniqueSorted(imports)
 }
 
 func uniqueSorted(xs []string) []string {
