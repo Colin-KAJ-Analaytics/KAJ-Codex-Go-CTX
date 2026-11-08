@@ -221,3 +221,13 @@ Both agents need the executable on their shell PATH. From the goctx source direc
 - Supabase-specific inspection
 - Firebase-specific inspection
 - cross-language support
+
+## Backtesting
+
+A reproducible local comparison harness is available at `scripts/backtest.py`. Build `bin/goctx`, then run:
+
+```sh
+python3 scripts/backtest.py --baseline /path/to/previous/goctx --candidate ./bin/goctx --repeats 9
+```
+
+It checks executable behavior, measures output bytes and warm-cache latency on this repository and generated fixtures, and records binary hashes and raw samples in `benchmarks/latest/`. See [the recorded backtest](benchmarks/latest/REPORT.md) for scope, results, and limitations. Byte-based token estimates are not exact model token counts or total agent-task savings.

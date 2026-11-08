@@ -323,7 +323,23 @@ func ApplyBudget(env *Envelope, opts Options) {
 			}
 		}
 	}
+	sizer, sizeErr := newJSONSizer(*env, prior)
+	selectedBytes := 0
 	for _, c := range candidates {
+		var item any
+		var existing int
+		switch c.kind {
+		case "files":
+			item, existing = files[c.index], len(env.Files)
+		case "symbols":
+			item, existing = symbols[c.index], len(env.Symbols)
+		case "routes":
+			item, existing = routes[c.index], len(env.Routes)
+		case "tests":
+			item, existing = tests[c.index], len(env.Tests)
+		case "read_plan":
+			item, existing = readPlan[c.index], len(env.ReadPlan)
+		}
 		switch c.kind {
 		case "files":
 			if opts.MaxFiles > 0 && len(env.Files) >= opts.MaxFiles {
@@ -345,9 +361,12 @@ func ApplyBudget(env *Envelope, opts Options) {
 		case "read_plan":
 			env.ReadPlan = append(env.ReadPlan, readPlan[c.index])
 		}
-		updateOmissions()
-		_, n, err := measuredEnvelope(*env)
-		if err != nil || (opts.Budget > 0 && n > opts.Budget) {
+		cost, err := sizer.itemCost(item, existing)
+		n := sizer.estimate(selectedBytes+cost, map[string]int{
+			"files": len(files) - len(env.Files), "symbols": len(symbols) - len(env.Symbols),
+			"routes": len(routes) - len(env.Routes), "tests": len(tests) - len(env.Tests), "read_plan": len(readPlan) - len(env.ReadPlan),
+		})
+		if sizeErr != nil || err != nil || (opts.Budget > 0 && n > opts.Budget) {
 			switch c.kind {
 			case "files":
 				env.Files = env.Files[:len(env.Files)-1]
@@ -360,6 +379,8 @@ func ApplyBudget(env *Envelope, opts Options) {
 			case "read_plan":
 				env.ReadPlan = env.ReadPlan[:len(env.ReadPlan)-1]
 			}
+		} else {
+			selectedBytes += cost
 		}
 	}
 	updateOmissions()

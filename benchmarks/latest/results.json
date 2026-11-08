@@ -1,0 +1,1237 @@
+{
+  "metadata": {
+    "baseline_path": "/usr/local/bin/goctx",
+    "baseline_sha256": "ab180683fe27399da06d185369bb47d2b8bed38b59010261fbb6e42f9133fc1d",
+    "candidate_path": "/Users/ckemp/KAJAnalytics/KAJ-Codex-Go-CTX/bin/goctx",
+    "candidate_sha256": "766e699dfa29818d76245aed594ec850e29b49d19c349512db7667eaf3c558f2",
+    "repeats": 9,
+    "seed": 20261107,
+    "token_metric": "UTF-8 bytes // 4; rough proxy, not model token counts",
+    "runtime_metric": "warm-cache wall-clock median; shuffled paired subprocess trials",
+    "fixture_sizes": {
+      "small": 13,
+      "medium": 49,
+      "large": 209
+    },
+    "baseline_limit": "Existing October 22 installed binary; not an exact reconstruction of the source immediately before the reviewed changes."
+  },
+  "checks": [
+    {
+      "name": "D1 nested subtest names retained",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "D2 passing FAIL-name test has passing status",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "D2 compiler exit and actual diagnostic retained",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "D3 noisy failure bounded and omissions visible",
+      "passed": true,
+      "detail": "2154 bytes"
+    },
+    {
+      "name": "D4 JSON accounting budget=250 mode=[]",
+      "passed": true,
+      "detail": "emitted=269; metadata-only overflow=True"
+    },
+    {
+      "name": "D4 JSON accounting budget=250 mode=['--compact-json']",
+      "passed": true,
+      "detail": "emitted=249; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=250 mode=['--quiet', '--compact-json']",
+      "passed": true,
+      "detail": "emitted=250; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=500 mode=[]",
+      "passed": true,
+      "detail": "emitted=496; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=500 mode=['--compact-json']",
+      "passed": true,
+      "detail": "emitted=498; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=500 mode=['--quiet', '--compact-json']",
+      "passed": true,
+      "detail": "emitted=493; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=1000 mode=[]",
+      "passed": true,
+      "detail": "emitted=998; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=1000 mode=['--compact-json']",
+      "passed": true,
+      "detail": "emitted=1000; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=1000 mode=['--quiet', '--compact-json']",
+      "passed": true,
+      "detail": "emitted=606; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=2000 mode=[]",
+      "passed": true,
+      "detail": "emitted=1437; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=2000 mode=['--compact-json']",
+      "passed": true,
+      "detail": "emitted=1000; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 JSON accounting budget=2000 mode=['--quiet', '--compact-json']",
+      "passed": true,
+      "detail": "emitted=606; metadata-only overflow=False"
+    },
+    {
+      "name": "D4 impossible budget reported honestly",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "D5 relevant route selected before limit",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "D6 same-named symbols keep distinct files",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "D6 emitted slice commands actually execute",
+      "passed": true,
+      "detail": "5 slices"
+    },
+    {
+      "name": "D7 small text budget retains actions and tests",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "E5 compact JSON preserves semantic content",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "G6 quiet keeps warnings/omissions fields and removes advice",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "E10 byte-stable repeated pack output",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "H4 Claude bridge preserves policies and is idempotent",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "diagnostic_comparison": {
+    "passing": {
+      "baseline": {
+        "exit": 0,
+        "bytes": 107,
+        "estimated_tokens": 26,
+        "output": "FAIL\n\n\nKey messages:\n- probe_test.go:3: expected literal FAIL\n\nRelevant file references:\n- probe_test.go:3\n",
+        "ms": 484.705166
+      },
+      "candidate": {
+        "exit": 0,
+        "bytes": 170,
+        "estimated_tokens": 42,
+        "output": "Tests passed.\n\nDiagnostics:\n- probe_test.go:3: expected literal FAIL\n\nKey messages:\n- probe_test.go:3: expected literal FAIL\n\nRelevant file references:\n- probe_test.go:3\n",
+        "ms": 422.180708
+      }
+    },
+    "subtests": {
+      "baseline": {
+        "exit": 1,
+        "bytes": 159,
+        "estimated_tokens": 39,
+        "output": "FAIL example.com/behavior/subtests\n\nFailed tests:\n1. TestX\n\nKey messages:\n- probe_test.go:3: expected valid input\n\nRelevant file references:\n- probe_test.go:3\n",
+        "ms": 320.598375
+      },
+      "candidate": {
+        "exit": 1,
+        "bytes": 253,
+        "estimated_tokens": 63,
+        "output": "FAIL example.com/behavior/subtests (exit 1)\n\nFailed tests:\n- TestX\n- TestX/case_two/punctuation#01\n\nDiagnostics:\n- probe_test.go:3: expected valid input\n\nKey messages:\n- probe_test.go:3: expected valid input\n\nRelevant file references:\n- probe_test.go:3\n",
+        "ms": 265.439083
+      }
+    },
+    "compile": {
+      "baseline": {
+        "exit": 1,
+        "bytes": 82,
+        "estimated_tokens": 20,
+        "output": "FAIL example.com/behavior/compile\n\n\nRelevant file references:\n- ./probe_test.go:2\n",
+        "ms": 83.567917
+      },
+      "candidate": {
+        "exit": 1,
+        "bytes": 221,
+        "estimated_tokens": 55,
+        "output": "FAIL example.com/behavior/compile (exit 1)\n\nDiagnostics:\n- # example.com/behavior/compile [example.com/behavior/compile.test]\n- ./probe_test.go:2:9: undefined: MissingSymbol\n\nRelevant file references:\n- ./probe_test.go:2\n",
+        "ms": 82.344666
+      }
+    },
+    "noisy": {
+      "baseline": {
+        "exit": 1,
+        "bytes": 21807,
+        "estimated_tokens": 5451,
+        "output": "FAIL example.com/behavior/noisy\n\nFailed tests:\n1. TestNoisy\n\nKey messages:\n- probe_test.go:3: file0.go:1: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file1.go:2: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file2.go:3: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file3.go:4: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file4.go:5: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file5.go:6: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file6.go:7: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file7.go:8: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file8.go:9: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file9.go:10: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file10.go:11: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file11.go:12: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nRelevant file references:\n- probe_test.go:3\n- file0.go:1\n- file1.go:2\n- file2.go:3\n- file3.go:4\n- file4.go:5\n- file5.go:6\n- file6.go:7\n- file7.go:8\n- file8.go:9\n- file9.go:10\n- file10.go:11\n- file11.go:12\n- file12.go:13\n- file13.go:14\n- file14.go:15\n- file15.go:16\n- file16.go:17\n- file17.go:18\n- file18.go:19\n- file19.go:20\n- file20.go:21\n- file21.go:22\n- file22.go:23\n- file23.go:24\n- file24.go:25\n- file25.go:26\n- file26.go:27\n- file27.go:28\n- file28.go:29\n- file29.go:30\n- file30.go:31\n- file31.go:32\n- file32.go:33\n- file33.go:34\n- file34.go:35\n- file35.go:36\n- file36.go:37\n- file37.go:38\n- file38.go:39\n- file39.go:40\n- file40.go:41\n- file41.go:42\n- file42.go:43\n- file43.go:44\n- file44.go:45\n- file45.go:46\n- file46.go:47\n- file47.go:48\n- file48.go:49\n- file49.go:50\n- file50.go:51\n- file51.go:52\n- file52.go:53\n- file53.go:54\n- file54.go:55\n- file55.go:56\n- file56.go:57\n- file57.go:58\n- file58.go:59\n- file59.go:60\n- file60.go:61\n- file61.go:62\n- file62.go:63\n- file63.go:64\n- file64.go:65\n- file65.go:66\n- file66.go:67\n- file67.go:68\n- file68.go:69\n- file69.go:70\n- file70.go:71\n- file71.go:72\n- file72.go:73\n- file73.go:74\n- file74.go:75\n- file75.go:76\n- file76.go:77\n- file77.go:78\n- file78.go:79\n- file79.go:80\n- file80.go:81\n- file81.go:82\n- file82.go:83\n- file83.go:84\n- file84.go:85\n- file85.go:86\n- file86.go:87\n- file87.go:88\n- file88.go:89\n- file89.go:90\n- file90.go:91\n- file91.go:92\n- file92.go:93\n- file93.go:94\n- file94.go:95\n- file95.go:96\n- file96.go:97\n- file97.go:98\n- file98.go:99\n- file99.go:100\n- file100.go:101\n- file101.go:102\n- file102.go:103\n- file103.go:104\n- file104.go:105\n- file105.go:106\n- file106.go:107\n- file107.go:108\n- file108.go:109\n- file109.go:110\n- file110.go:111\n- file111.go:112\n- file112.go:113\n- file113.go:114\n- file114.go:115\n- file115.go:116\n- file116.go:117\n- file117.go:118\n- file118.go:119\n- file119.go:120\n- file120.go:121\n- file121.go:122\n- file122.go:123\n- file123.go:124\n- file124.go:125\n- file125.go:126\n- file126.go:127\n- file127.go:128\n- file128.go:129\n- file129.go:130\n- file130.go:131\n- file131.go:132\n- file132.go:133\n- file133.go:134\n- file134.go:135\n- file135.go:136\n- file136.go:137\n- file137.go:138\n- file138.go:139\n- file139.go:140\n- file140.go:141\n- file141.go:142\n- file142.go:143\n- file143.go:144\n- file144.go:145\n- file145.go:146\n- file146.go:147\n- file147.go:148\n- file148.go:149\n- file149.go:150\n- file150.go:151\n- file151.go:152\n- file152.go:153\n- file153.go:154\n- file154.go:155\n- file155.go:156\n- file156.go:157\n- file157.go:158\n- file158.go:159\n- file159.go:160\n- file160.go:161\n- file161.go:162\n- file162.go:163\n- file163.go:164\n- file164.go:165\n- file165.go:166\n- file166.go:167\n- file167.go:168\n- file168.go:169\n- file169.go:170\n- file170.go:171\n- file171.go:172\n- file172.go:173\n- file173.go:174\n- file174.go:175\n- file175.go:176\n- file176.go:177\n- file177.go:178\n- file178.go:179\n- file179.go:180\n- file180.go:181\n- file181.go:182\n- file182.go:183\n- file183.go:184\n- file184.go:185\n- file185.go:186\n- file186.go:187\n- file187.go:188\n- file188.go:189\n- file189.go:190\n- file190.go:191\n- file191.go:192\n- file192.go:193\n- file193.go:194\n- file194.go:195\n- file195.go:196\n- file196.go:197\n- file197.go:198\n- file198.go:199\n- file199.go:200\n- file200.go:201\n- file201.go:202\n- file202.go:203\n- file203.go:204\n- file204.go:205\n- file205.go:206\n- file206.go:207\n- file207.go:208\n- file208.go:209\n- file209.go:210\n- file210.go:211\n- file211.go:212\n- file212.go:213\n- file213.go:214\n- file214.go:215\n- file215.go:216\n- file216.go:217\n- file217.go:218\n- file218.go:219\n- file219.go:220\n- file220.go:221\n- file221.go:222\n- file222.go:223\n- file223.go:224\n- file224.go:225\n- file225.go:226\n- file226.go:227\n- file227.go:228\n- file228.go:229\n- file229.go:230\n- file230.go:231\n- file231.go:232\n- file232.go:233\n- file233.go:234\n- file234.go:235\n- file235.go:236\n- file236.go:237\n- file237.go:238\n- file238.go:239\n- file239.go:240\n- file240.go:241\n- file241.go:242\n- file242.go:243\n- file243.go:244\n- file244.go:245\n- file245.go:246\n- file246.go:247\n- file247.go:248\n- file248.go:249\n- file249.go:250\n- file250.go:251\n- file251.go:252\n- file252.go:253\n- file253.go:254\n- file254.go:255\n- file255.go:256\n- file256.go:257\n- file257.go:258\n- file258.go:259\n- file259.go:260\n- file260.go:261\n- file261.go:262\n- file262.go:263\n- file263.go:264\n- file264.go:265\n- file265.go:266\n- file266.go:267\n- file267.go:268\n- file268.go:269\n- file269.go:270\n- file270.go:271\n- file271.go:272\n- file272.go:273\n- file273.go:274\n- file274.go:275\n- file275.go:276\n- file276.go:277\n- file277.go:278\n- file278.go:279\n- file279.go:280\n- file280.go:281\n- file281.go:282\n- file282.go:283\n- file283.go:284\n- file284.go:285\n- file285.go:286\n- file286.go:287\n- file287.go:288\n- file288.go:289\n- file289.go:290\n- file290.go:291\n- file291.go:292\n- file292.go:293\n- file293.go:294\n- file294.go:295\n- file295.go:296\n- file296.go:297\n- file297.go:298\n- file298.go:299\n- file299.go:300\n- file300.go:301\n- file301.go:302\n- file302.go:303\n- file303.go:304\n- file304.go:305\n- file305.go:306\n- file306.go:307\n- file307.go:308\n- file308.go:309\n- file309.go:310\n- file310.go:311\n- file311.go:312\n- file312.go:313\n- file313.go:314\n- file314.go:315\n- file315.go:316\n- file316.go:317\n- file317.go:318\n- file318.go:319\n- file319.go:320\n- file320.go:321\n- file321.go:322\n- file322.go:323\n- file323.go:324\n- file324.go:325\n- file325.go:326\n- file326.go:327\n- file327.go:328\n- file328.go:329\n- file329.go:330\n- file330.go:331\n- file331.go:332\n- file332.go:333\n- file333.go:334\n- file334.go:335\n- file335.go:336\n- file336.go:337\n- file337.go:338\n- file338.go:339\n- file339.go:340\n- file340.go:341\n- file341.go:342\n- file342.go:343\n- file343.go:344\n- file344.go:345\n- file345.go:346\n- file346.go:347\n- file347.go:348\n- file348.go:349\n- file349.go:350\n- file350.go:351\n- file351.go:352\n- file352.go:353\n- file353.go:354\n- file354.go:355\n- file355.go:356\n- file356.go:357\n- file357.go:358\n- file358.go:359\n- file359.go:360\n- file360.go:361\n- file361.go:362\n- file362.go:363\n- file363.go:364\n- file364.go:365\n- file365.go:366\n- file366.go:367\n- file367.go:368\n- file368.go:369\n- file369.go:370\n- file370.go:371\n- file371.go:372\n- file372.go:373\n- file373.go:374\n- file374.go:375\n- file375.go:376\n- file376.go:377\n- file377.go:378\n- file378.go:379\n- file379.go:380\n- file380.go:381\n- file381.go:382\n- file382.go:383\n- file383.go:384\n- file384.go:385\n- file385.go:386\n- file386.go:387\n- file387.go:388\n- file388.go:389\n- file389.go:390\n- file390.go:391\n- file391.go:392\n- file392.go:393\n- file393.go:394\n- file394.go:395\n- file395.go:396\n- file396.go:397\n- file397.go:398\n- file398.go:399\n- file399.go:400\n- file400.go:401\n- file401.go:402\n- file402.go:403\n- file403.go:404\n- file404.go:405\n- file405.go:406\n- file406.go:407\n- file407.go:408\n- file408.go:409\n- file409.go:410\n- file410.go:411\n- file411.go:412\n- file412.go:413\n- file413.go:414\n- file414.go:415\n- file415.go:416\n- file416.go:417\n- file417.go:418\n- file418.go:419\n- file419.go:420\n- file420.go:421\n- file421.go:422\n- file422.go:423\n- file423.go:424\n- file424.go:425\n- file425.go:426\n- file426.go:427\n- file427.go:428\n- file428.go:429\n- file429.go:430\n- file430.go:431\n- file431.go:432\n- file432.go:433\n- file433.go:434\n- file434.go:435\n- file435.go:436\n- file436.go:437\n- file437.go:438\n- file438.go:439\n- file439.go:440\n- file440.go:441\n- file441.go:442\n- file442.go:443\n- file443.go:444\n- file444.go:445\n- file445.go:446\n- file446.go:447\n- file447.go:448\n- file448.go:449\n- file449.go:450\n- file450.go:451\n- file451.go:452\n- file452.go:453\n- file453.go:454\n- file454.go:455\n- file455.go:456\n- file456.go:457\n- file457.go:458\n- file458.go:459\n- file459.go:460\n- file460.go:461\n- file461.go:462\n- file462.go:463\n- file463.go:464\n- file464.go:465\n- file465.go:466\n- file466.go:467\n- file467.go:468\n- file468.go:469\n- file469.go:470\n- file470.go:471\n- file471.go:472\n- file472.go:473\n- file473.go:474\n- file474.go:475\n- file475.go:476\n- file476.go:477\n- file477.go:478\n- file478.go:479\n- file479.go:480\n- file480.go:481\n- file481.go:482\n- file482.go:483\n- file483.go:484\n- file484.go:485\n- file485.go:486\n- file486.go:487\n- file487.go:488\n- file488.go:489\n- file489.go:490\n- file490.go:491\n- file491.go:492\n- file492.go:493\n- file493.go:494\n- file494.go:495\n- file495.go:496\n- file496.go:497\n- file497.go:498\n- file498.go:499\n- file499.go:500\n- file500.go:501\n- file501.go:502\n- file502.go:503\n- file503.go:504\n- file504.go:505\n- file505.go:506\n- file506.go:507\n- file507.go:508\n- file508.go:509\n- file509.go:510\n- file510.go:511\n- file511.go:512\n- file512.go:513\n- file513.go:514\n- file514.go:515\n- file515.go:516\n- file516.go:517\n- file517.go:518\n- file518.go:519\n- file519.go:520\n- file520.go:521\n- file521.go:522\n- file522.go:523\n- file523.go:524\n- file524.go:525\n- file525.go:526\n- file526.go:527\n- file527.go:528\n- file528.go:529\n- file529.go:530\n- file530.go:531\n- file531.go:532\n- file532.go:533\n- file533.go:534\n- file534.go:535\n- file535.go:536\n- file536.go:537\n- file537.go:538\n- file538.go:539\n- file539.go:540\n- file540.go:541\n- file541.go:542\n- file542.go:543\n- file543.go:544\n- file544.go:545\n- file545.go:546\n- file546.go:547\n- file547.go:548\n- file548.go:549\n- file549.go:550\n- file550.go:551\n- file551.go:552\n- file552.go:553\n- file553.go:554\n- file554.go:555\n- file555.go:556\n- file556.go:557\n- file557.go:558\n- file558.go:559\n- file559.go:560\n- file560.go:561\n- file561.go:562\n- file562.go:563\n- file563.go:564\n- file564.go:565\n- file565.go:566\n- file566.go:567\n- file567.go:568\n- file568.go:569\n- file569.go:570\n- file570.go:571\n- file571.go:572\n- file572.go:573\n- file573.go:574\n- file574.go:575\n- file575.go:576\n- file576.go:577\n- file577.go:578\n- file578.go:579\n- file579.go:580\n- file580.go:581\n- file581.go:582\n- file582.go:583\n- file583.go:584\n- file584.go:585\n- file585.go:586\n- file586.go:587\n- file587.go:588\n- file588.go:589\n- file589.go:590\n- file590.go:591\n- file591.go:592\n- file592.go:593\n- file593.go:594\n- file594.go:595\n- file595.go:596\n- file596.go:597\n- file597.go:598\n- file598.go:599\n- file599.go:600\n- file600.go:601\n- file601.go:602\n- file602.go:603\n- file603.go:604\n- file604.go:605\n- file605.go:606\n- file606.go:607\n- file607.go:608\n- file608.go:609\n- file609.go:610\n- file610.go:611\n- file611.go:612\n- file612.go:613\n- file613.go:614\n- file614.go:615\n- file615.go:616\n- file616.go:617\n- file617.go:618\n- file618.go:619\n- file619.go:620\n- file620.go:621\n- file621.go:622\n- file622.go:623\n- file623.go:624\n- file624.go:625\n- file625.go:626\n- file626.go:627\n- file627.go:628\n- file628.go:629\n- file629.go:630\n- file630.go:631\n- file631.go:632\n- file632.go:633\n- file633.go:634\n- file634.go:635\n- file635.go:636\n- file636.go:637\n- file637.go:638\n- file638.go:639\n- file639.go:640\n- file640.go:641\n- file641.go:642\n- file642.go:643\n- file643.go:644\n- file644.go:645\n- file645.go:646\n- file646.go:647\n- file647.go:648\n- file648.go:649\n- file649.go:650\n- file650.go:651\n- file651.go:652\n- file652.go:653\n- file653.go:654\n- file654.go:655\n- file655.go:656\n- file656.go:657\n- file657.go:658\n- file658.go:659\n- file659.go:660\n- file660.go:661\n- file661.go:662\n- file662.go:663\n- file663.go:664\n- file664.go:665\n- file665.go:666\n- file666.go:667\n- file667.go:668\n- file668.go:669\n- file669.go:670\n- file670.go:671\n- file671.go:672\n- file672.go:673\n- file673.go:674\n- file674.go:675\n- file675.go:676\n- file676.go:677\n- file677.go:678\n- file678.go:679\n- file679.go:680\n- file680.go:681\n- file681.go:682\n- file682.go:683\n- file683.go:684\n- file684.go:685\n- file685.go:686\n- file686.go:687\n- file687.go:688\n- file688.go:689\n- file689.go:690\n- file690.go:691\n- file691.go:692\n- file692.go:693\n- file693.go:694\n- file694.go:695\n- file695.go:696\n- file696.go:697\n- file697.go:698\n- file698.go:699\n- file699.go:700\n- file700.go:701\n- file701.go:702\n- file702.go:703\n- file703.go:704\n- file704.go:705\n- file705.go:706\n- file706.go:707\n- file707.go:708\n- file708.go:709\n- file709.go:710\n- file710.go:711\n- file711.go:712\n- file712.go:713\n- file713.go:714\n- file714.go:715\n- file715.go:716\n- file716.go:717\n- file717.go:718\n- file718.go:719\n- file719.go:720\n- file720.go:721\n- file721.go:722\n- file722.go:723\n- file723.go:724\n- file724.go:725\n- file725.go:726\n- file726.go:727\n- file727.go:728\n- file728.go:729\n- file729.go:730\n- file730.go:731\n- file731.go:732\n- file732.go:733\n- file733.go:734\n- file734.go:735\n- file735.go:736\n- file736.go:737\n- file737.go:738\n- file738.go:739\n- file739.go:740\n- file740.go:741\n- file741.go:742\n- file742.go:743\n- file743.go:744\n- file744.go:745\n- file745.go:746\n- file746.go:747\n- file747.go:748\n- file748.go:749\n- file749.go:750\n- file750.go:751\n- file751.go:752\n- file752.go:753\n- file753.go:754\n- file754.go:755\n- file755.go:756\n- file756.go:757\n- file757.go:758\n- file758.go:759\n- file759.go:760\n- file760.go:761\n- file761.go:762\n- file762.go:763\n- file763.go:764\n- file764.go:765\n- file765.go:766\n- file766.go:767\n- file767.go:768\n- file768.go:769\n- file769.go:770\n- file770.go:771\n- file771.go:772\n- file772.go:773\n- file773.go:774\n- file774.go:775\n- file775.go:776\n- file776.go:777\n- file777.go:778\n- file778.go:779\n- file779.go:780\n- file780.go:781\n- file781.go:782\n- file782.go:783\n- file783.go:784\n- file784.go:785\n- file785.go:786\n- file786.go:787\n- file787.go:788\n- file788.go:789\n- file789.go:790\n- file790.go:791\n- file791.go:792\n- file792.go:793\n- file793.go:794\n- file794.go:795\n- file795.go:796\n- file796.go:797\n- file797.go:798\n- file798.go:799\n- file799.go:800\n- file800.go:801\n- file801.go:802\n- file802.go:803\n- file803.go:804\n- file804.go:805\n- file805.go:806\n- file806.go:807\n- file807.go:808\n- file808.go:809\n- file809.go:810\n- file810.go:811\n- file811.go:812\n- file812.go:813\n- file813.go:814\n- file814.go:815\n- file815.go:816\n- file816.go:817\n- file817.go:818\n- file818.go:819\n- file819.go:820\n- file820.go:821\n- file821.go:822\n- file822.go:823\n- file823.go:824\n- file824.go:825\n- file825.go:826\n- file826.go:827\n- file827.go:828\n- file828.go:829\n- file829.go:830\n- file830.go:831\n- file831.go:832\n- file832.go:833\n- file833.go:834\n- file834.go:835\n- file835.go:836\n- file836.go:837\n- file837.go:838\n- file838.go:839\n- file839.go:840\n- file840.go:841\n- file841.go:842\n- file842.go:843\n- file843.go:844\n- file844.go:845\n- file845.go:846\n- file846.go:847\n- file847.go:848\n- file848.go:849\n- file849.go:850\n- file850.go:851\n- file851.go:852\n- file852.go:853\n- file853.go:854\n- file854.go:855\n- file855.go:856\n- file856.go:857\n- file857.go:858\n- file858.go:859\n- file859.go:860\n- file860.go:861\n- file861.go:862\n- file862.go:863\n- file863.go:864\n- file864.go:865\n- file865.go:866\n- file866.go:867\n- file867.go:868\n- file868.go:869\n- file869.go:870\n- file870.go:871\n- file871.go:872\n- file872.go:873\n- file873.go:874\n- file874.go:875\n- file875.go:876\n- file876.go:877\n- file877.go:878\n- file878.go:879\n- file879.go:880\n- file880.go:881\n- file881.go:882\n- file882.go:883\n- file883.go:884\n- file884.go:885\n- file885.go:886\n- file886.go:887\n- file887.go:888\n- file888.go:889\n- file889.go:890\n- file890.go:891\n- file891.go:892\n- file892.go:893\n- file893.go:894\n- file894.go:895\n- file895.go:896\n- file896.go:897\n- file897.go:898\n- file898.go:899\n- file899.go:900\n- file900.go:901\n- file901.go:902\n- file902.go:903\n- file903.go:904\n- file904.go:905\n- file905.go:906\n- file906.go:907\n- file907.go:908\n- file908.go:909\n- file909.go:910\n- file910.go:911\n- file911.go:912\n- file912.go:913\n- file913.go:914\n- file914.go:915\n- file915.go:916\n- file916.go:917\n- file917.go:918\n- file918.go:919\n- file919.go:920\n- file920.go:921\n- file921.go:922\n- file922.go:923\n- file923.go:924\n- file924.go:925\n- file925.go:926\n- file926.go:927\n- file927.go:928\n- file928.go:929\n- file929.go:930\n- file930.go:931\n- file931.go:932\n- file932.go:933\n- file933.go:934\n- file934.go:935\n- file935.go:936\n- file936.go:937\n- file937.go:938\n- file938.go:939\n- file939.go:940\n- file940.go:941\n- file941.go:942\n- file942.go:943\n- file943.go:944\n- file944.go:945\n- file945.go:946\n- file946.go:947\n- file947.go:948\n- file948.go:949\n- file949.go:950\n- file950.go:951\n- file951.go:952\n- file952.go:953\n- file953.go:954\n- file954.go:955\n- file955.go:956\n- file956.go:957\n- file957.go:958\n- file958.go:959\n- file959.go:960\n- file960.go:961\n- file961.go:962\n- file962.go:963\n- file963.go:964\n- file964.go:965\n- file965.go:966\n- file966.go:967\n- file967.go:968\n- file968.go:969\n- file969.go:970\n- file970.go:971\n- file971.go:972\n- file972.go:973\n- file973.go:974\n- file974.go:975\n- file975.go:976\n- file976.go:977\n- file977.go:978\n- file978.go:979\n- file979.go:980\n- file980.go:981\n- file981.go:982\n- file982.go:983\n- file983.go:984\n- file984.go:985\n- file985.go:986\n- file986.go:987\n- file987.go:988\n- file988.go:989\n- file989.go:990\n- file990.go:991\n- file991.go:992\n- file992.go:993\n- file993.go:994\n- file994.go:995\n- file995.go:996\n- file996.go:997\n- file997.go:998\n- file998.go:999\n- file999.go:1000\n- file1000.go:1001\n- file1001.go:1002\n- file1002.go:1003\n- file1003.go:1004\n- file1004.go:1005\n- file1005.go:1006\n- file1006.go:1007\n- file1007.go:1008\n- file1008.go:1009\n- file1009.go:1010\n- file1010.go:1011\n- file1011.go:1012\n- file1012.go:1013\n- file1013.go:1014\n- file1014.go:1015\n- file1015.go:1016\n- file1016.go:1017\n- file1017.go:1018\n- file1018.go:1019\n- file1019.go:1020\n- file1020.go:1021\n- file1021.go:1022\n- file1022.go:1023\n- file1023.go:1024\n- file1024.go:1025\n- file1025.go:1026\n- file1026.go:1027\n- file1027.go:1028\n- file1028.go:1029\n- file1029.go:1030\n- file1030.go:1031\n- file1031.go:1032\n- file1032.go:1033\n- file1033.go:1034\n- file1034.go:1035\n- file1035.go:1036\n- file1036.go:1037\n- file1037.go:1038\n- file1038.go:1039\n- file1039.go:1040\n- file1040.go:1041\n- file1041.go:1042\n- file1042.go:1043\n- file1043.go:1044\n- file1044.go:1045\n- file1045.go:1046\n- file1046.go:1047\n- file1047.go:1048\n- file1048.go:1049\n- file1049.go:1050\n- file1050.go:1051\n- file1051.go:1052\n- file1052.go:1053\n- file1053.go:1054\n- file1054.go:1055\n- file1055.go:1056\n- file1056.go:1057\n- file1057.go:1058\n- file1058.go:1059\n- file1059.go:1060\n- file1060.go:1061\n- file1061.go:1062\n- file1062.go:1063\n- file1063.go:1064\n- file1064.go:1065\n- file1065.go:1066\n- file1066.go:1067\n- file1067.go:1068\n- file1068.go:1069\n- file1069.go:1070\n- file1070.go:1071\n- file1071.go:1072\n- file1072.go:1073\n- file1073.go:1074\n- file1074.go:1075\n- file1075.go:1076\n- file1076.go:1077\n- file1077.go:1078\n- file1078.go:1079\n- file1079.go:1080\n- file1080.go:1081\n- file1081.go:1082\n- file1082.go:1083\n- file1083.go:1084\n- file1084.go:1085\n- file1085.go:1086\n- file1086.go:1087\n- file1087.go:1088\n- file1088.go:1089\n- file1089.go:1090\n- file1090.go:1091\n- file1091.go:1092\n- file1092.go:1093\n- file1093.go:1094\n- file1094.go:1095\n- file1095.go:1096\n- file1096.go:1097\n- file1097.go:1098\n- file1098.go:1099\n- file1099.go:1100\n- file1100.go:1101\n- file1101.go:1102\n- file1102.go:1103\n- file1103.go:1104\n- file1104.go:1105\n- file1105.go:1106\n- file1106.go:1107\n- file1107.go:1108\n- file1108.go:1109\n- file1109.go:1110\n- file1110.go:1111\n- file1111.go:1112\n- file1112.go:1113\n- file1113.go:1114\n- file1114.go:1115\n- file1115.go:1116\n- file1116.go:1117\n- file1117.go:1118\n- file1118.go:1119\n- file1119.go:1120\n- file1120.go:1121\n- file1121.go:1122\n- file1122.go:1123\n- file1123.go:1124\n- file1124.go:1125\n- file1125.go:1126\n- file1126.go:1127\n- file1127.go:1128\n- file1128.go:1129\n- file1129.go:1130\n- file1130.go:1131\n- file1131.go:1132\n- file1132.go:1133\n- file1133.go:1134\n- file1134.go:1135\n- file1135.go:1136\n- file1136.go:1137\n- file1137.go:1138\n- file1138.go:1139\n- file1139.go:1140\n- file1140.go:1141\n- file1141.go:1142\n- file1142.go:1143\n- file1143.go:1144\n- file1144.go:1145\n- file1145.go:1146\n- file1146.go:1147\n- file1147.go:1148\n- file1148.go:1149\n- file1149.go:1150\n- file1150.go:1151\n- file1151.go:1152\n- file1152.go:1153\n- file1153.go:1154\n- file1154.go:1155\n- file1155.go:1156\n- file1156.go:1157\n- file1157.go:1158\n- file1158.go:1159\n- file1159.go:1160\n- file1160.go:1161\n- file1161.go:1162\n- file1162.go:1163\n- file1163.go:1164\n- file1164.go:1165\n- file1165.go:1166\n- file1166.go:1167\n- file1167.go:1168\n- file1168.go:1169\n- file1169.go:1170\n- file1170.go:1171\n- file1171.go:1172\n- file1172.go:1173\n- file1173.go:1174\n- file1174.go:1175\n- file1175.go:1176\n- file1176.go:1177\n- file1177.go:1178\n- file1178.go:1179\n- file1179.go:1180\n- file1180.go:1181\n- file1181.go:1182\n- file1182.go:1183\n- file1183.go:1184\n- file1184.go:1185\n- file1185.go:1186\n- file1186.go:1187\n- file1187.go:1188\n- file1188.go:1189\n- file1189.go:1190\n- file1190.go:1191\n- file1191.go:1192\n- file1192.go:1193\n- file1193.go:1194\n- file1194.go:1195\n- file1195.go:1196\n- file1196.go:1197\n- file1197.go:1198\n- file1198.go:1199\n- file1199.go:1200\n\nRaw output omitted: 1205 lines suppressed\n",
+        "ms": 329.839708
+      },
+      "candidate": {
+        "exit": 1,
+        "bytes": 2154,
+        "estimated_tokens": 538,
+        "output": "FAIL example.com/behavior/noisy (exit 1)\n\nFailed tests:\n- TestNoisy\n\nDiagnostics:\n- probe_test.go:3: file0.go:1: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file1.go:2: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file2.go:3: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file3.go:4: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file4.go:5: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file5.go:6: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file6.go:7: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file7.go:8: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nKey messages:\n- probe_test.go:3: file0.go:1: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file1.go:2: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file2.go:3: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file3.go:4: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file4.go:5: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file5.go:6: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file6.go:7: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file7.go:8: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file8.go:9: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file9.go:10: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file10.go:11: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- probe_test.go:3: file11.go:12: expected result xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nRelevant file references:\n- probe_test.go:3\n- file0.go:1\n- file1.go:2\n- file2.go:3\n- file3.go:4\n- file4.go:5\n- file5.go:6\n- file6.go:7\n- file7.go:8\n- file8.go:9\n\nOmitted: 3571 additional or oversized diagnostic items.\nRaw output summarized: 1206 lines (request raw output for full details).\n",
+        "ms": 274.486208
+      }
+    }
+  },
+  "measurements": [
+    {
+      "repository": "real_repo",
+      "case": "task_text",
+      "variant": "baseline",
+      "bytes": 3125,
+      "estimated_tokens": 781,
+      "median_ms": 81.524,
+      "min_ms": 79.124,
+      "max_ms": 83.806,
+      "samples_ms": [
+        79.124,
+        81.524,
+        80.355,
+        82.045,
+        81.55,
+        80.583,
+        83.417,
+        83.806,
+        80.503
+      ]
+    },
+    {
+      "repository": "real_repo",
+      "case": "task_text",
+      "variant": "candidate",
+      "bytes": 2580,
+      "estimated_tokens": 645,
+      "median_ms": 80.949,
+      "min_ms": 79.483,
+      "max_ms": 83.155,
+      "samples_ms": [
+        80.981,
+        81.268,
+        80.949,
+        83.155,
+        80.246,
+        80.334,
+        79.483,
+        80.183,
+        81.162
+      ]
+    },
+    {
+      "repository": "real_repo",
+      "case": "task_text",
+      "variant": "candidate_quiet",
+      "bytes": 1615,
+      "estimated_tokens": 403,
+      "median_ms": 82.183,
+      "min_ms": 80.55,
+      "max_ms": 84.416,
+      "samples_ms": [
+        80.55,
+        81.403,
+        84.416,
+        82.183,
+        83.195,
+        83.916,
+        81.603,
+        81.443,
+        83.165
+      ]
+    },
+    {
+      "repository": "real_repo",
+      "case": "pack_text",
+      "variant": "baseline",
+      "bytes": 2362,
+      "estimated_tokens": 590,
+      "median_ms": 91.749,
+      "min_ms": 89.361,
+      "max_ms": 94.701,
+      "samples_ms": [
+        94.701,
+        91.749,
+        91.891,
+        91.07,
+        90.371,
+        89.361,
+        90.339,
+        92.554,
+        91.872
+      ]
+    },
+    {
+      "repository": "real_repo",
+      "case": "pack_text",
+      "variant": "candidate",
+      "bytes": 2580,
+      "estimated_tokens": 645,
+      "median_ms": 91.765,
+      "min_ms": 89.862,
+      "max_ms": 94.764,
+      "samples_ms": [
+        90.778,
+        91.38,
+        94.764,
+        93.19,
+        91.952,
+        89.862,
+        91.866,
+        89.955,
+        91.765
+      ]
+    },
+    {
+      "repository": "real_repo",
+      "case": "pack_text",
+      "variant": "candidate_quiet",
+      "bytes": 1615,
+      "estimated_tokens": 403,
+      "median_ms": 91.097,
+      "min_ms": 89.708,
+      "max_ms": 93.301,
+      "samples_ms": [
+        91.309,
+        91.323,
+        90.758,
+        91.097,
+        93.301,
+        90.253,
+        92.671,
+        89.708,
+        90.264
+      ]
+    },
+    {
+      "repository": "real_repo",
+      "case": "pack_json",
+      "variant": "baseline",
+      "bytes": 3791,
+      "estimated_tokens": 947,
+      "median_ms": 92.298,
+      "min_ms": 88.366,
+      "max_ms": 122.997,
+      "samples_ms": [
+        90.647,
+        92.562,
+        91.704,
+        95.068,
+        88.366,
+        122.997,
+        90.484,
+        92.298,
+        92.446
+      ],
+      "files": 8,
+      "symbols": 10,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 1220
+    },
+    {
+      "repository": "real_repo",
+      "case": "pack_json",
+      "variant": "candidate",
+      "bytes": 4417,
+      "estimated_tokens": 1104,
+      "median_ms": 91.86,
+      "min_ms": 89.352,
+      "max_ms": 94.132,
+      "samples_ms": [
+        91.343,
+        90.636,
+        89.352,
+        92.109,
+        90.943,
+        92.272,
+        91.86,
+        92.399,
+        94.132
+      ],
+      "files": 8,
+      "symbols": 10,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 1104
+    },
+    {
+      "repository": "real_repo",
+      "case": "pack_json",
+      "variant": "candidate_compact",
+      "bytes": 2279,
+      "estimated_tokens": 569,
+      "median_ms": 91.998,
+      "min_ms": 90.078,
+      "max_ms": 94.849,
+      "samples_ms": [
+        91.898,
+        90.078,
+        94.731,
+        90.589,
+        91.998,
+        94.788,
+        91.221,
+        94.849,
+        93.654
+      ],
+      "files": 8,
+      "symbols": 10,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 569
+    },
+    {
+      "repository": "real_repo",
+      "case": "map_json",
+      "variant": "baseline",
+      "bytes": 5479,
+      "estimated_tokens": 1369,
+      "median_ms": 79.946,
+      "min_ms": 76.62,
+      "max_ms": 81.818,
+      "samples_ms": [
+        76.62,
+        81.091,
+        81.657,
+        79.042,
+        79.946,
+        80.003,
+        79.324,
+        78.514,
+        81.818
+      ],
+      "files": 1,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 980
+    },
+    {
+      "repository": "real_repo",
+      "case": "map_json",
+      "variant": "candidate",
+      "bytes": 6918,
+      "estimated_tokens": 1729,
+      "median_ms": 78.771,
+      "min_ms": 74.958,
+      "max_ms": 80.829,
+      "samples_ms": [
+        77.838,
+        77.349,
+        74.958,
+        80.829,
+        79.361,
+        80.589,
+        80.405,
+        78.771,
+        78.489
+      ],
+      "files": 20,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 1729
+    },
+    {
+      "repository": "small",
+      "case": "task_text",
+      "variant": "baseline",
+      "bytes": 3132,
+      "estimated_tokens": 783,
+      "median_ms": 61.266,
+      "min_ms": 59.964,
+      "max_ms": 63.242,
+      "samples_ms": [
+        61.363,
+        61.319,
+        60.744,
+        59.964,
+        63.242,
+        60.628,
+        61.266,
+        60.399,
+        61.76
+      ]
+    },
+    {
+      "repository": "small",
+      "case": "task_text",
+      "variant": "candidate",
+      "bytes": 2774,
+      "estimated_tokens": 693,
+      "median_ms": 61.529,
+      "min_ms": 59.536,
+      "max_ms": 62.664,
+      "samples_ms": [
+        60.338,
+        61.101,
+        59.536,
+        59.684,
+        61.529,
+        62.226,
+        61.594,
+        61.963,
+        62.664
+      ]
+    },
+    {
+      "repository": "small",
+      "case": "task_text",
+      "variant": "candidate_quiet",
+      "bytes": 1521,
+      "estimated_tokens": 380,
+      "median_ms": 61.163,
+      "min_ms": 60.077,
+      "max_ms": 62.888,
+      "samples_ms": [
+        60.218,
+        60.556,
+        61.163,
+        61.537,
+        62.357,
+        62.888,
+        60.198,
+        61.984,
+        60.077
+      ]
+    },
+    {
+      "repository": "small",
+      "case": "pack_text",
+      "variant": "baseline",
+      "bytes": 2571,
+      "estimated_tokens": 642,
+      "median_ms": 62.171,
+      "min_ms": 59.164,
+      "max_ms": 63.204,
+      "samples_ms": [
+        62.285,
+        62.231,
+        62.171,
+        61.051,
+        59.164,
+        61.548,
+        63.204,
+        62.975,
+        59.903
+      ]
+    },
+    {
+      "repository": "small",
+      "case": "pack_text",
+      "variant": "candidate",
+      "bytes": 2802,
+      "estimated_tokens": 700,
+      "median_ms": 61.829,
+      "min_ms": 58.37,
+      "max_ms": 64.729,
+      "samples_ms": [
+        64.729,
+        60.816,
+        62.064,
+        60.597,
+        58.37,
+        60.989,
+        62.954,
+        62.561,
+        61.829
+      ]
+    },
+    {
+      "repository": "small",
+      "case": "pack_text",
+      "variant": "candidate_quiet",
+      "bytes": 1549,
+      "estimated_tokens": 387,
+      "median_ms": 62.26,
+      "min_ms": 60.577,
+      "max_ms": 65.139,
+      "samples_ms": [
+        60.736,
+        62.26,
+        64.855,
+        63.279,
+        61.74,
+        63.193,
+        62.049,
+        65.139,
+        60.577
+      ]
+    },
+    {
+      "repository": "small",
+      "case": "pack_json",
+      "variant": "baseline",
+      "bytes": 4596,
+      "estimated_tokens": 1149,
+      "median_ms": 62.382,
+      "min_ms": 60.602,
+      "max_ms": 64.402,
+      "samples_ms": [
+        62.394,
+        62.508,
+        61.965,
+        64.402,
+        61.961,
+        62.382,
+        61.249,
+        60.602,
+        62.6
+      ],
+      "files": 9,
+      "symbols": 10,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 1360
+    },
+    {
+      "repository": "small",
+      "case": "pack_json",
+      "variant": "candidate",
+      "bytes": 5758,
+      "estimated_tokens": 1439,
+      "median_ms": 62.075,
+      "min_ms": 58.648,
+      "max_ms": 63.283,
+      "samples_ms": [
+        62.186,
+        61.647,
+        60.745,
+        63.283,
+        58.648,
+        61.917,
+        62.154,
+        62.469,
+        62.075
+      ],
+      "files": 9,
+      "symbols": 15,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 1439
+    },
+    {
+      "repository": "small",
+      "case": "pack_json",
+      "variant": "candidate_compact",
+      "bytes": 2432,
+      "estimated_tokens": 608,
+      "median_ms": 61.962,
+      "min_ms": 60.372,
+      "max_ms": 63.636,
+      "samples_ms": [
+        62.398,
+        63.392,
+        61.021,
+        62.794,
+        63.636,
+        60.891,
+        60.372,
+        61.962,
+        60.688
+      ],
+      "files": 9,
+      "symbols": 15,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 608
+    },
+    {
+      "repository": "small",
+      "case": "map_json",
+      "variant": "baseline",
+      "bytes": 6269,
+      "estimated_tokens": 1567,
+      "median_ms": 59.167,
+      "min_ms": 57.857,
+      "max_ms": 61.933,
+      "samples_ms": [
+        58.769,
+        58.41,
+        60.181,
+        61.933,
+        60.838,
+        59.167,
+        60.388,
+        57.857,
+        59.086
+      ],
+      "files": 13,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 1940
+    },
+    {
+      "repository": "small",
+      "case": "map_json",
+      "variant": "candidate",
+      "bytes": 6271,
+      "estimated_tokens": 1567,
+      "median_ms": 61.191,
+      "min_ms": 58.055,
+      "max_ms": 63.494,
+      "samples_ms": [
+        58.055,
+        62.903,
+        61.892,
+        62.06,
+        58.48,
+        61.191,
+        63.494,
+        60.821,
+        58.482
+      ],
+      "files": 13,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 1567
+    },
+    {
+      "repository": "medium",
+      "case": "task_text",
+      "variant": "baseline",
+      "bytes": 7314,
+      "estimated_tokens": 1828,
+      "median_ms": 68.666,
+      "min_ms": 67.883,
+      "max_ms": 71.105,
+      "samples_ms": [
+        68.175,
+        67.883,
+        69.669,
+        68.044,
+        68.49,
+        69.096,
+        71.105,
+        68.666,
+        68.987
+      ]
+    },
+    {
+      "repository": "medium",
+      "case": "task_text",
+      "variant": "candidate",
+      "bytes": 6521,
+      "estimated_tokens": 1630,
+      "median_ms": 70.115,
+      "min_ms": 68.061,
+      "max_ms": 72.211,
+      "samples_ms": [
+        69.544,
+        70.621,
+        72.211,
+        71.125,
+        70.115,
+        69.777,
+        68.061,
+        72.06,
+        69.552
+      ]
+    },
+    {
+      "repository": "medium",
+      "case": "task_text",
+      "variant": "candidate_quiet",
+      "bytes": 1533,
+      "estimated_tokens": 383,
+      "median_ms": 69.726,
+      "min_ms": 67.249,
+      "max_ms": 78.223,
+      "samples_ms": [
+        71.352,
+        67.249,
+        70.894,
+        69.412,
+        70.293,
+        78.223,
+        69.432,
+        67.431,
+        69.726
+      ]
+    },
+    {
+      "repository": "medium",
+      "case": "pack_text",
+      "variant": "baseline",
+      "bytes": 6503,
+      "estimated_tokens": 1625,
+      "median_ms": 72.861,
+      "min_ms": 69.954,
+      "max_ms": 94.331,
+      "samples_ms": [
+        72.861,
+        94.331,
+        73.599,
+        70.169,
+        69.954,
+        74.114,
+        74.129,
+        72.031,
+        71.779
+      ]
+    },
+    {
+      "repository": "medium",
+      "case": "pack_text",
+      "variant": "candidate",
+      "bytes": 6549,
+      "estimated_tokens": 1637,
+      "median_ms": 74.018,
+      "min_ms": 70.17,
+      "max_ms": 76.714,
+      "samples_ms": [
+        74.828,
+        74.908,
+        73.528,
+        76.714,
+        71.152,
+        70.17,
+        72.872,
+        74.018,
+        74.109
+      ]
+    },
+    {
+      "repository": "medium",
+      "case": "pack_text",
+      "variant": "candidate_quiet",
+      "bytes": 1561,
+      "estimated_tokens": 390,
+      "median_ms": 72.138,
+      "min_ms": 69.657,
+      "max_ms": 77.599,
+      "samples_ms": [
+        74.27,
+        77.052,
+        77.599,
+        70.182,
+        70.375,
+        69.657,
+        71.863,
+        72.243,
+        72.138
+      ]
+    },
+    {
+      "repository": "medium",
+      "case": "pack_json",
+      "variant": "baseline",
+      "bytes": 9274,
+      "estimated_tokens": 2318,
+      "median_ms": 73.141,
+      "min_ms": 72.372,
+      "max_ms": 76.211,
+      "samples_ms": [
+        74.574,
+        72.772,
+        72.577,
+        72.892,
+        76.211,
+        73.141,
+        74.447,
+        73.216,
+        72.372
+      ],
+      "files": 12,
+      "symbols": 15,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 1700
+    },
+    {
+      "repository": "medium",
+      "case": "pack_json",
+      "variant": "candidate",
+      "bytes": 7986,
+      "estimated_tokens": 1996,
+      "median_ms": 74.456,
+      "min_ms": 72.501,
+      "max_ms": 75.746,
+      "samples_ms": [
+        72.501,
+        74.143,
+        74.456,
+        72.802,
+        75.746,
+        74.638,
+        73.453,
+        74.675,
+        75.079
+      ],
+      "files": 8,
+      "symbols": 14,
+      "tests": 4,
+      "read_plan": 2,
+      "reported_tokens": 1996
+    },
+    {
+      "repository": "medium",
+      "case": "pack_json",
+      "variant": "candidate_compact",
+      "bytes": 2511,
+      "estimated_tokens": 627,
+      "median_ms": 74.227,
+      "min_ms": 71.871,
+      "max_ms": 75.936,
+      "samples_ms": [
+        74.656,
+        74.227,
+        72.684,
+        74.905,
+        71.871,
+        75.936,
+        74.344,
+        72.962,
+        72.841
+      ],
+      "files": 12,
+      "symbols": 15,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 627
+    },
+    {
+      "repository": "medium",
+      "case": "map_json",
+      "variant": "baseline",
+      "bytes": 5347,
+      "estimated_tokens": 1336,
+      "median_ms": 67.774,
+      "min_ms": 66.271,
+      "max_ms": 70.118,
+      "samples_ms": [
+        68.712,
+        67.728,
+        67.11,
+        67.774,
+        70.118,
+        66.271,
+        68.385,
+        67.123,
+        69.824
+      ],
+      "files": 0,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 900
+    },
+    {
+      "repository": "medium",
+      "case": "map_json",
+      "variant": "candidate",
+      "bytes": 6639,
+      "estimated_tokens": 1659,
+      "median_ms": 68.159,
+      "min_ms": 66.95,
+      "max_ms": 71.278,
+      "samples_ms": [
+        67.239,
+        68.212,
+        68.159,
+        68.425,
+        67.472,
+        71.278,
+        66.95,
+        68.581,
+        67.113
+      ],
+      "files": 20,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 1659
+    },
+    {
+      "repository": "large",
+      "case": "task_text",
+      "variant": "baseline",
+      "bytes": 8000,
+      "estimated_tokens": 2000,
+      "median_ms": 106.606,
+      "min_ms": 104.116,
+      "max_ms": 115.159,
+      "samples_ms": [
+        115.159,
+        106.389,
+        106.606,
+        105.718,
+        108.919,
+        107.242,
+        105.546,
+        109.793,
+        104.116
+      ]
+    },
+    {
+      "repository": "large",
+      "case": "task_text",
+      "variant": "candidate",
+      "bytes": 7260,
+      "estimated_tokens": 1815,
+      "median_ms": 107.102,
+      "min_ms": 105.422,
+      "max_ms": 108.252,
+      "samples_ms": [
+        107.102,
+        107.7,
+        105.422,
+        107.537,
+        106.067,
+        105.686,
+        108.15,
+        108.252,
+        106.584
+      ]
+    },
+    {
+      "repository": "large",
+      "case": "task_text",
+      "variant": "candidate_quiet",
+      "bytes": 1538,
+      "estimated_tokens": 384,
+      "median_ms": 106.751,
+      "min_ms": 104.873,
+      "max_ms": 109.446,
+      "samples_ms": [
+        109.446,
+        106.751,
+        104.873,
+        105.61,
+        106.916,
+        105.872,
+        107.824,
+        107.902,
+        105.895
+      ]
+    },
+    {
+      "repository": "large",
+      "case": "pack_text",
+      "variant": "baseline",
+      "bytes": 7188,
+      "estimated_tokens": 1797,
+      "median_ms": 121.66,
+      "min_ms": 118.269,
+      "max_ms": 133.663,
+      "samples_ms": [
+        123.647,
+        122.448,
+        121.66,
+        118.955,
+        119.199,
+        118.269,
+        119.384,
+        133.663,
+        125.18
+      ]
+    },
+    {
+      "repository": "large",
+      "case": "pack_text",
+      "variant": "candidate",
+      "bytes": 7288,
+      "estimated_tokens": 1822,
+      "median_ms": 120.933,
+      "min_ms": 118.681,
+      "max_ms": 144.697,
+      "samples_ms": [
+        120.933,
+        120.824,
+        120.635,
+        122.146,
+        124.231,
+        119.28,
+        118.681,
+        144.697,
+        122.874
+      ]
+    },
+    {
+      "repository": "large",
+      "case": "pack_text",
+      "variant": "candidate_quiet",
+      "bytes": 1566,
+      "estimated_tokens": 391,
+      "median_ms": 121.073,
+      "min_ms": 117.196,
+      "max_ms": 122.472,
+      "samples_ms": [
+        118.918,
+        121.073,
+        122.472,
+        120.625,
+        121.153,
+        117.196,
+        121.532,
+        119.654,
+        122.212
+      ]
+    },
+    {
+      "repository": "large",
+      "case": "pack_json",
+      "variant": "baseline",
+      "bytes": 9952,
+      "estimated_tokens": 2488,
+      "median_ms": 121.511,
+      "min_ms": 119.704,
+      "max_ms": 125.949,
+      "samples_ms": [
+        119.704,
+        121.919,
+        125.949,
+        121.897,
+        121.511,
+        121.842,
+        121.213,
+        121.007,
+        121.51
+      ],
+      "files": 12,
+      "symbols": 15,
+      "tests": 4,
+      "read_plan": 10,
+      "reported_tokens": 1680
+    },
+    {
+      "repository": "large",
+      "case": "pack_json",
+      "variant": "candidate",
+      "bytes": 7989,
+      "estimated_tokens": 1997,
+      "median_ms": 121.351,
+      "min_ms": 119.46,
+      "max_ms": 127.306,
+      "samples_ms": [
+        126.093,
+        127.306,
+        122.118,
+        121.225,
+        120.494,
+        122.227,
+        121.351,
+        119.46,
+        121.152
+      ],
+      "files": 8,
+      "symbols": 14,
+      "tests": 4,
+      "read_plan": 2,
+      "reported_tokens": 1997
+    },
+    {
+      "repository": "large",
+      "case": "pack_json",
+      "variant": "candidate_compact",
+      "bytes": 2515,
+      "estimated_tokens": 628,
+      "median_ms": 120.371,
+      "min_ms": 118.17,
+      "max_ms": 125.756,
+      "samples_ms": [
+        125.756,
+        118.17,
+        119.675,
+        119.639,
+        122.892,
+        120.286,
+        120.371,
+        122.827,
+        123.561
+      ],
+      "files": 12,
+      "symbols": 15,
+      "tests": 4,
+      "read_plan": 11,
+      "reported_tokens": 628
+    },
+    {
+      "repository": "large",
+      "case": "map_json",
+      "variant": "baseline",
+      "bytes": 5383,
+      "estimated_tokens": 1345,
+      "median_ms": 99.083,
+      "min_ms": 97.678,
+      "max_ms": 102.201,
+      "samples_ms": [
+        98.89,
+        100.781,
+        99.469,
+        99.984,
+        99.083,
+        97.678,
+        102.201,
+        98.56,
+        98.573
+      ],
+      "files": 0,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 900
+    },
+    {
+      "repository": "large",
+      "case": "map_json",
+      "variant": "candidate",
+      "bytes": 6594,
+      "estimated_tokens": 1648,
+      "median_ms": 99.372,
+      "min_ms": 97.495,
+      "max_ms": 103.187,
+      "samples_ms": [
+        102.672,
+        98.115,
+        98.335,
+        103.187,
+        100.93,
+        102.283,
+        97.495,
+        97.698,
+        99.372
+      ],
+      "files": 20,
+      "symbols": 40,
+      "tests": 0,
+      "read_plan": 0,
+      "reported_tokens": 1648
+    }
+  ]
+}
