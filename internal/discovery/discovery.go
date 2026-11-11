@@ -52,7 +52,7 @@ func Discover(start string) (Result, error) {
 		fillModuleShape(root, &modules[i])
 	}
 	res.Modules = modules
-	selected := selectNearest(abs, modules)
+	selected := selectNearest(root, abs, modules)
 	if selected != "" {
 		res.Selected = selected
 		res.Confidence = "high"
@@ -204,17 +204,14 @@ func nearestUp(start, name string) string {
 	}
 }
 
-func selectNearest(cwd string, mods []Module) string {
+func selectNearest(root, cwd string, mods []Module) string {
 	var best string
 	bestLen := -1
 	for _, m := range mods {
-		if m.Path == "." {
-			return "."
-		}
-		p := filepath.Clean(filepath.Join(repoCandidate(cwd), filepath.FromSlash(m.Path)))
-		if strings.HasPrefix(cwd, p) && len(p) > bestLen {
-			bestLen = len(p)
-			best = m.Path
+		p := filepath.Join(root, filepath.FromSlash(m.Path))
+		rel, err := filepath.Rel(p, cwd)
+		if err == nil && filepath.IsLocal(rel) && len(p) > bestLen {
+			bestLen, best = len(p), m.Path
 		}
 	}
 	return best

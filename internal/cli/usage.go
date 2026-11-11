@@ -11,6 +11,7 @@ Commands:
   slice <file> --symbol <name>      Print one symbol body from a Go file.
   task "<task description>"         Print a heuristic context pack.
   codex-pack "<task description>"   Print a budgeted one-command Codex context pack.
+  embeds                            List Go embed declarations and matched files.
   routes                            Extract likely HTTP route registrations.
   test-summary -- <go command>      Run and summarize a Go test command.
   diff-summary                      Summarize changes from .goctx/baseline.json if present.
@@ -25,6 +26,8 @@ Common flags on context commands:
   --root <path> --module <path-or-name> --all-modules
   --budget <estimated-tokens> --max-files <n> --max-symbols <n> --max-routes <n>
   --format text|json|markdown
+  --agent                         Emit a compact decision for task or codex-pack.
+  --explain                       Include ranking evidence in agent output.
   --quiet                         Omit pack explanations and static advice.
   --compact-json                  Serialize JSON without indentation.
 `

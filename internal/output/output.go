@@ -21,18 +21,22 @@ const (
 )
 
 type Options struct {
-	Root        string
-	Module      string
-	AllModules  bool
-	Budget      int64
-	MaxFiles    int
-	MaxSymbols  int
-	MaxRoutes   int
-	Format      Format
-	Force       bool
-	Strict      bool
-	Quiet       bool
-	CompactJSON bool
+	Agent          bool
+	FormatExplicit bool
+	Explain        bool
+	Symbol         string
+	Root           string
+	Module         string
+	AllModules     bool
+	Budget         int64
+	MaxFiles       int
+	MaxSymbols     int
+	MaxRoutes      int
+	Format         Format
+	Force          bool
+	Strict         bool
+	Quiet          bool
+	CompactJSON    bool
 }
 
 type Omission struct {
@@ -153,6 +157,17 @@ func ParseCommon(args []string, opts *Options) ([]string, error) {
 				return nil, fmt.Errorf("invalid --format %q: use text, json, or markdown", args[i])
 			}
 			opts.Format = f
+			opts.FormatExplicit = true
+		case "--agent":
+			opts.Agent = true
+		case "--explain":
+			opts.Explain = true
+		case "--symbol":
+			i++
+			if i >= len(args) || strings.HasPrefix(args[i], "--") {
+				return nil, fmt.Errorf("--symbol requires a name")
+			}
+			opts.Symbol = args[i]
 		case "--quiet":
 			opts.Quiet = true
 		case "--compact-json":

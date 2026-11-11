@@ -2,12 +2,14 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"goctx/internal/baseline"
 	"goctx/internal/codex"
@@ -51,13 +53,27 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			return usageErr(stderr, errOrUsage(err, "usage: goctx map [--root path] [--module module] [--budget n] [--format text|json|markdown]"))
 		}
 		return runMap(opts, stdout, stderr)
-	case "symbols":
-		if len(args) != 2 {
-			return usageErr(stderr, "usage: goctx symbols <file>")
+	case "symbols", "slice":
+		rest, err := output.ParseCommon(args[1:], &opts)
+		if err != nil {
+			return usageErr(stderr, err.Error())
 		}
-		return runSymbols(args[1], stdout, stderr)
-	case "slice":
-		return runSlice(args[1:], stdout, stderr)
+		for _, arg := range rest {
+			if strings.HasPrefix(arg, "-") {
+				return usageErr(stderr, fmt.Sprintf("unknown flag %q", arg))
+			}
+		}
+		if len(rest) != 1 || (args[0] == "slice" && opts.Symbol == "") {
+			return usageErr(stderr, "usage: goctx "+args[0]+" <file> [--root path] [--format text|json|markdown] [--symbol name]")
+		}
+		path := rest[0]
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(opts.Root, path)
+		}
+		if args[0] == "symbols" {
+			return runSymbols(path, rest[0], opts, stdout, stderr)
+		}
+		return runSlice(path, rest[0], opts, stdout, stderr)
 	case "task":
 		rest, err := output.ParseCommon(args[1:], &opts)
 		if err != nil || len(rest) != 1 {
@@ -70,6 +86,12 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			return usageErr(stderr, errOrUsage(err, "usage: goctx codex-pack [flags] \"<task description>\""))
 		}
 		return runCodexPack(opts, rest[0], stdout, stderr)
+	case "embeds":
+		rest, err := output.ParseCommon(args[1:], &opts)
+		if err != nil || len(rest) != 0 {
+			return usageErr(stderr, errOrUsage(err, "usage: goctx embeds [--root path] [--module name] [--format text|json] [--budget n]"))
+		}
+		return runEmbeds(opts, stdout, stderr)
 	case "routes":
 		rest, err := output.ParseCommon(args[1:], &opts)
 		if err != nil || len(rest) != 0 {
@@ -235,46 +257,63 @@ func runMap(opts output.Options, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func runSymbols(path string, stdout, stderr io.Writer) int {
+func runSymbols(path, display string, opts output.Options, stdout, stderr io.Writer) int {
 	syms, err := indexer.SymbolsInFile(path)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
 		return 1
 	}
+	if opts.Format == output.FormatJSON {
+		items := make([]codexpack.AgentSymbol, 0, len(syms))
+		for _, s := range syms {
+			items = append(items, codexpack.SymbolLocation(s, display))
+		}
+		return writeStructured(stdout, stderr, items, opts.CompactJSON)
+	}
 	for _, s := range syms {
-		fmt.Fprintf(stdout, "%s %s %s:%d-%d\n", s.Kind, indexer.DisplayName(s), filepath.ToSlash(path), s.StartLine, s.EndLine)
+		if opts.Quiet {
+			fmt.Fprintf(stdout, "%s %s:%d-%d\n", indexer.DisplayName(s), filepath.ToSlash(display), s.StartLine, s.EndLine)
+			continue
+		}
+		fmt.Fprintf(stdout, "%s %s %s:%d-%d\n", s.Kind, indexer.DisplayName(s), filepath.ToSlash(display), s.StartLine, s.EndLine)
 	}
 	return 0
 }
 
-func runSlice(args []string, stdout, stderr io.Writer) int {
-	if len(args) != 3 || args[1] != "--symbol" {
-		return usageErr(stderr, "usage: goctx slice <file> --symbol <name>")
-	}
-	res, err := slicer.SliceFile(args[0], args[2])
+func runSlice(path, display string, opts output.Options, stdout, stderr io.Writer) int {
+	res, err := slicer.SliceFile(path, opts.Symbol)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
 		return 1
 	}
 	if res.NotFound {
-		fmt.Fprintf(stderr, "symbol %q not found. Available symbols:\n", args[2])
+		fmt.Fprintf(stderr, "symbol %q not found. Available symbols:\n", opts.Symbol)
 		for _, s := range res.Available {
 			fmt.Fprintf(stderr, "- %s at line %d\n", indexer.DisplayName(s), s.StartLine)
 		}
 		return 1
 	}
 	if res.Ambiguous {
-		fmt.Fprintf(stderr, "symbol %q is ambiguous:\n", args[2])
+		fmt.Fprintf(stderr, "symbol %q is ambiguous:\n", opts.Symbol)
 		for _, s := range res.Matches {
 			fmt.Fprintf(stderr, "- %s at line %d\n", indexer.DisplayName(s), s.StartLine)
 		}
 		return 1
+	}
+	if opts.Format == output.FormatJSON {
+		return writeStructured(stdout, stderr, struct {
+			Symbol codexpack.AgentSymbol `json:"symbol"`
+			Source string                `json:"source"`
+		}{codexpack.SymbolLocation(res.Matches[0], display), res.Source}, opts.CompactJSON)
 	}
 	fmt.Fprint(stdout, res.Source)
 	return 0
 }
 
 func runTask(opts output.Options, task string, stdout, stderr io.Writer) int {
+	if opts.Agent {
+		return runAgent(opts, task, stdout, stderr)
+	}
 	root, disc, err := discovery.SelectRoot(opts.Root, opts.Module)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -304,6 +343,9 @@ func runTask(opts output.Options, task string, stdout, stderr io.Writer) int {
 }
 
 func runCodexPack(opts output.Options, task string, stdout, stderr io.Writer) int {
+	if opts.Agent {
+		return runAgent(opts, task, stdout, stderr)
+	}
 	res, err := codexpack.Build(context.Background(), task, opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -315,6 +357,28 @@ func runCodexPack(opts output.Options, task string, stdout, stderr io.Writer) in
 		return 0
 	}
 	codexpack.WriteText(stdout, res, opts)
+	return 0
+}
+
+func runEmbeds(opts output.Options, stdout, stderr io.Writer) int {
+	root := opts.Root
+	if opts.Module != "" {
+		selected, _, err := discovery.SelectRoot(root, opts.Module)
+		if err != nil {
+			fmt.Fprintln(stderr, "error:", err)
+			return 1
+		}
+		root = selected
+	}
+	scan, err := scanner.Scan(root)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+	if err := writeEmbedInventory(stdout, codexpack.Embeds(scan), opts); err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
 	return 0
 }
 
@@ -579,4 +643,28 @@ func taskEnvelope(command, root, module string, res taskpack.Result, opts output
 	}
 	env.Data = map[string]any{"task": res.Task, "avoid": res.Avoid, "savings": res.Savings}
 	return env
+}
+
+func writeStructured(stdout, stderr io.Writer, value any, compact bool) int {
+	enc := json.NewEncoder(stdout)
+	if !compact {
+		enc.SetIndent("", "  ")
+	}
+	if err := enc.Encode(value); err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+	return 0
+}
+
+func runAgent(opts output.Options, task string, stdout, stderr io.Writer) int {
+	pack, err := codexpack.BuildAgent(context.Background(), task, opts)
+	if err == nil {
+		err = pack.Write(stdout, opts)
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+	return 0
 }

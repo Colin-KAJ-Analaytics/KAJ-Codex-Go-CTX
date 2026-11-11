@@ -231,3 +231,18 @@ python3 scripts/backtest.py --baseline /path/to/previous/goctx --candidate ./bin
 ```
 
 It checks executable behavior, measures output bytes and warm-cache latency on this repository and generated fixtures, and records binary hashes and raw samples in `benchmarks/latest/`. See [the recorded backtest](benchmarks/latest/REPORT.md) for scope, results, and limitations. Byte-based token estimates are not exact model token counts or total agent-task savings.
+
+## Agent task decisions
+
+```sh
+goctx task "fix the embedded canvas page" --agent --budget 500
+goctx task "fix InspectPipeline API handler" --agent --format text
+goctx symbols internal/web/server.go --root web --format json
+goctx slice internal/web/server.go --root web --symbol Handler --quiet
+```
+
+`task --agent` and `codex-pack --agent` return a compact versioned JSON object by default. Use `--format text` for a readable view or `--explain` to include ranking evidence. Existing command output remains available without `--agent`.
+
+A decision can be `likely_go_edit`, `likely_asset_edit`, or `needs_context`. Task confidence and Go index health are separate. File and symbol paths are relative to the reported module. The test command includes its module directory so it can run from the repository root. When several modules tie, use `--module` to select one.
+
+The pack reports up to two source candidates, up to five relevant routes, and one test suggestion. It recognizes literal `go:embed` patterns and direct `http.ServeFileFS` handlers in the route registration file. Other embedded files can match by name. Route-to-file mapping is limited to supported literal handlers. Embedded HTML references can resolve through recognized `fs.Sub` and `http.FileServer` mounts, including root-relative URLs and literal `StripPrefix` mounts. Literal page dispatch and script fetches can supply related routes. The `test_scope` field labels page smoke tests separately from Go source or route tests and package fallbacks. File estimates and the output budget use the existing byte-based token estimate. A module-local baseline breaks ties between equally relevant candidates.

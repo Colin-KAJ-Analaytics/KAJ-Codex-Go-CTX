@@ -22,6 +22,7 @@ const (
 )
 
 type SymbolInfo struct {
+	Signature string
 	Name      string
 	Receiver  string
 	Kind      SymbolKind
@@ -63,7 +64,9 @@ func SymbolsFromAST(fset *token.FileSet, file *ast.File, path string) []SymbolIn
 			if kind == SymbolFunc && strings.HasPrefix(d.Name.Name, "Test") && strings.HasSuffix(path, "_test.go") {
 				kind = SymbolTest
 			}
-			out = append(out, SymbolInfo{Name: d.Name.Name, Receiver: recv, Kind: kind, File: filepath.ToSlash(path), StartLine: fset.Position(startWithDoc(d.Doc, d.Pos())).Line, EndLine: fset.Position(d.End()).Line, Exported: ast.IsExported(d.Name.Name)})
+			signature := *d
+			signature.Body, signature.Doc = nil, nil
+			out = append(out, SymbolInfo{Signature: ExprString(fset, &signature), Name: d.Name.Name, Receiver: recv, Kind: kind, File: filepath.ToSlash(path), StartLine: fset.Position(startWithDoc(d.Doc, d.Pos())).Line, EndLine: fset.Position(d.End()).Line, Exported: ast.IsExported(d.Name.Name)})
 		case *ast.GenDecl:
 			for _, spec := range d.Specs {
 				start := startWithDoc(d.Doc, spec.Pos())
@@ -73,7 +76,7 @@ func SymbolsFromAST(fset *token.FileSet, file *ast.File, path string) []SymbolIn
 					if _, ok := s.Type.(*ast.InterfaceType); ok {
 						kind = SymbolInterface
 					}
-					out = append(out, SymbolInfo{Name: s.Name.Name, Kind: kind, File: filepath.ToSlash(path), StartLine: fset.Position(start).Line, EndLine: fset.Position(spec.End()).Line, Exported: ast.IsExported(s.Name.Name)})
+					out = append(out, SymbolInfo{Signature: "type " + ExprString(fset, s), Name: s.Name.Name, Kind: kind, File: filepath.ToSlash(path), StartLine: fset.Position(start).Line, EndLine: fset.Position(spec.End()).Line, Exported: ast.IsExported(s.Name.Name)})
 				case *ast.ValueSpec:
 					kind := SymbolVar
 					if d.Tok == token.CONST {

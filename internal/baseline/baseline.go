@@ -97,3 +97,26 @@ func hashFile(path string) (string, error) {
 	sum := sha256.Sum256(data)
 	return fmt.Sprintf("%x", sum[:]), nil
 }
+
+// ChangedCandidates compares only the requested files with an existing snapshot.
+func ChangedCandidates(root string, paths []string) map[string]bool {
+	snapshot, err := Load(root)
+	changed := map[string]bool{}
+	if err != nil {
+		return changed
+	}
+	previous := make(map[string]string, len(snapshot.Files))
+	for _, f := range snapshot.Files {
+		previous[f.Path] = f.SHA256
+	}
+	for _, rel := range paths {
+		if !filepath.IsLocal(filepath.FromSlash(rel)) {
+			continue
+		}
+		current, err := hashFile(filepath.Join(root, filepath.FromSlash(rel)))
+		if err == nil && current != previous[rel] {
+			changed[rel] = true
+		}
+	}
+	return changed
+}
